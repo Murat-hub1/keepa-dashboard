@@ -7,81 +7,60 @@
 <link rel="icon" id="favicon" href="data:,">
 <style>
   :root {
-    --surface-0: #f4f4f2;
-    --surface-1: #fcfcfb;
-    --border: #e3e2de;
-    --text-primary: #0b0b0b;
-    --text-secondary: #52514e;
-    --text-muted: #7a7974;
-    --good: #0ca30c;
-    --warning: #fab219;
-    --critical: #d03b3b;
-    --good-bg: #e9f6e9;
-    --warning-bg: #fff6e0;
-    --critical-bg: #fbeaea;
+    --surface-0: #f4f4f2; --surface-1: #fcfcfb; --border: #e3e2de;
+    --text-primary: #0b0b0b; --text-secondary: #52514e; --text-muted: #7a7974;
+    --accent: #2a78d6; --accent-ink: #ffffff;
+    --good: #0ca30c; --warning: #fab219; --critical: #d03b3b;
+    --good-bg: #e9f6e9; --warning-bg: #fff6e0; --critical-bg: #fbeaea;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      color-scheme: dark;
-      --surface-0: #111110;
-      --surface-1: #1a1a19;
-      --border: #2e2e2c;
-      --text-primary: #ffffff;
-      --text-secondary: #c3c2b7;
-      --text-muted: #8f8e86;
-      --good-bg: #13261a;
-      --warning-bg: #2b2412;
-      --critical-bg: #2e1616;
+      color-scheme: dark; --surface-0: #111110; --surface-1: #1a1a19; --border: #2e2e2c;
+      --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #8f8e86; --accent: #3987e5;
+      --good-bg: #13261a; --warning-bg: #2b2412; --critical-bg: #2e1616;
     }
   }
   :root[data-theme="dark"] {
-    color-scheme: dark;
-    --surface-0: #111110;
-    --surface-1: #1a1a19;
-    --border: #2e2e2c;
-    --text-primary: #ffffff;
-    --text-secondary: #c3c2b7;
-    --text-muted: #8f8e86;
-    --good-bg: #13261a;
-    --warning-bg: #2b2412;
-    --critical-bg: #2e1616;
+    color-scheme: dark; --surface-0: #111110; --surface-1: #1a1a19; --border: #2e2e2c;
+    --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #8f8e86; --accent: #3987e5;
+    --good-bg: #13261a; --warning-bg: #2b2412; --critical-bg: #2e1616;
   }
   * { box-sizing: border-box; }
-  body {
-    margin: 0; background: var(--surface-0); color: var(--text-primary);
-    font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  }
+  body { margin: 0; background: var(--surface-0); color: var(--text-primary);
+         font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
   main { max-width: 960px; margin: 0 auto; padding: 24px 16px 48px; }
-  header { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  a { color: var(--accent); }
+  [hidden] { display: none !important; }
+
+  header { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
   h1 { font-size: 20px; margin: 0; font-weight: 600; }
   .updated { color: var(--text-muted); font-size: 13px; }
+  .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin: 16px 0 20px; }
+  .tabs button { font: inherit; font-size: 14px; font-weight: 500; padding: 8px 14px; border: 0; background: none;
+                 color: var(--text-secondary); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  .tabs button[aria-selected="true"] { color: var(--text-primary); border-bottom-color: var(--accent); }
 
-  .status {
-    margin: 16px 0 24px; padding: 14px 16px; border-radius: 10px;
-    display: flex; gap: 12px; align-items: flex-start; border: 1px solid var(--border);
-    background: var(--surface-1);
-  }
+  /* ---------- dashboard ---------- */
+  .status { margin: 0 0 24px; padding: 14px 16px; border-radius: 10px; display: flex; gap: 12px; align-items: flex-start;
+            border: 1px solid var(--border); background: var(--surface-1); }
   .status .icon { flex: none; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center;
                   color: #fff; font-weight: 700; font-size: 14px; margin-top: 1px; }
-  .status.good     { background: var(--good-bg); }     .status.good .icon { background: var(--good); }
-  .status.warning  { background: var(--warning-bg); }  .status.warning .icon { background: var(--warning); color: #0b0b0b; }
+  .status.good { background: var(--good-bg); } .status.good .icon { background: var(--good); }
+  .status.warning { background: var(--warning-bg); } .status.warning .icon { background: var(--warning); color: #0b0b0b; }
   .status.critical { background: var(--critical-bg); } .status.critical .icon { background: var(--critical); }
   .status .title { font-weight: 600; }
   .status ul { margin: 4px 0 0; padding-left: 18px; color: var(--text-secondary); font-size: 14px; }
   .status .meta { color: var(--text-secondary); font-size: 13px; margin-top: 2px; }
   .alerts-btn { margin-left: auto; flex: none; font: inherit; font-size: 13px; padding: 6px 10px; border-radius: 6px;
                 border: 1px solid var(--border); background: var(--surface-1); color: var(--text-primary); cursor: pointer; }
-
   .hero { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
   .hero .label, .tile .label { color: var(--text-secondary); font-size: 13px; }
   .hero .value { font-size: 56px; font-weight: 600; line-height: 1.1; margin-top: 4px; }
   .hero .sub { color: var(--text-secondary); font-size: 14px; margin-top: 4px; }
-
   .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin: 12px 0 28px; }
   .tile { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
   .tile .value { font-size: 26px; font-weight: 600; margin-top: 2px; }
   .tile .sub { color: var(--text-muted); font-size: 12px; }
-
   h2 { font-size: 16px; margin: 0 0 10px; font-weight: 600; }
   .table-wrap { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; overflow-x: auto; }
   table { width: 100%; border-collapse: collapse; font-size: 14px; }
@@ -92,62 +71,185 @@
   tr:last-child td { border-bottom: 0; }
   tr.today td { font-weight: 600; }
   .note { color: var(--text-muted); font-size: 12px; margin-top: 10px; }
+
+  /* ---------- domain finder ---------- */
+  .df { max-width: 760px; }
+  .panel { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; margin-bottom: 16px; }
+  .stat { background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+  .stat .label { color: var(--text-secondary); font-size: 12px; }
+  .stat .value { font-size: 20px; font-weight: 600; }
+  label { display: block; font-size: 13px; color: var(--text-secondary); margin: 0 0 4px; }
+  input[type=text] { width: 100%; font: inherit; font-size: 16px; padding: 10px 12px; border-radius: 8px;
+                     border: 1px solid var(--border); background: var(--surface-0); color: var(--text-primary); }
+  input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; align-items: center; }
+  .btn { font: inherit; padding: 9px 14px; border-radius: 8px; border: 1px solid var(--border);
+         background: var(--surface-1); color: var(--text-primary); cursor: pointer; }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+  kbd { font: 11px ui-monospace, Menlo, monospace; border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; opacity: .8; }
+  .who { color: var(--text-muted); font-size: 13px; margin-bottom: 12px; }
+  .who button { font: inherit; font-size: 13px; background: none; border: 0; color: var(--accent); cursor: pointer; padding: 0; text-decoration: underline; }
+  .seller-name { font-size: 22px; font-weight: 600; margin: 0; }
+  .seller-name a { color: inherit; text-decoration: none; }
+  .seller-name a:hover { text-decoration: underline; }
+  .facts { display: grid; grid-template-columns: 130px 1fr; gap: 4px 12px; margin: 12px 0; font-size: 14px; }
+  .facts dt { color: var(--text-secondary); }
+  .facts dd { margin: 0; overflow-wrap: anywhere; }
+  .links { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 16px; }
+  .links a { font-size: 13px; text-decoration: none; border: 1px solid var(--border); border-radius: 999px; padding: 4px 10px; }
+  .links a.main { border-color: var(--accent); font-weight: 600; }
+  .links a:hover { border-color: var(--accent); }
+  .preview { font-size: 13px; color: var(--text-muted); min-height: 18px; margin-top: 4px; }
+  .msg { border-radius: 8px; padding: 8px 12px; margin-top: 12px; font-size: 14px; }
+  .msg.ok { background: var(--good-bg); }
+  .msg.err { background: var(--critical-bg); }
+  .last { margin-top: 14px; font-size: 13px; color: var(--text-secondary); }
+  .last .btn { padding: 2px 8px; font-size: 12px; margin-left: 6px; }
+  .editing { font-size: 13px; font-weight: 600; color: var(--critical); margin-bottom: 6px; }
 </style>
 </head>
 <body>
 <main>
   <header>
     <h1>Lead Pipeline</h1>
-    <span class="updated"><a href="domains.html" style="color:inherit">Domain Finder →</a> · <span id="updated">Loading…</span></span>
+    <span class="updated" id="updated">Loading…</span>
   </header>
 
-  <section class="status" id="status" role="status" aria-live="polite">
-    <span class="icon" id="status-icon">…</span>
-    <div>
-      <div class="title" id="status-title">Checking system health…</div>
-      <div class="meta" id="status-meta"></div>
-      <ul id="status-issues"></ul>
+  <nav class="tabs" role="tablist">
+    <button role="tab" id="tab-btn-dashboard" aria-controls="tab-dashboard" aria-selected="true">Dashboard</button>
+    <button role="tab" id="tab-btn-domains" aria-controls="tab-domains" aria-selected="false">Domain Finder</button>
+  </nav>
+
+  <!-- ===================== DASHBOARD ===================== -->
+  <section id="tab-dashboard" role="tabpanel">
+    <section class="status" id="status" role="status" aria-live="polite">
+      <span class="icon" id="status-icon">…</span>
+      <div>
+        <div class="title" id="status-title">Checking system health…</div>
+        <div class="meta" id="status-meta"></div>
+        <ul id="status-issues"></ul>
+      </div>
+      <button class="alerts-btn" id="alerts-btn" hidden>Enable alerts</button>
+    </section>
+
+    <section class="hero">
+      <div class="label">Total leads processed since start</div>
+      <div class="value" id="total">–</div>
+      <div class="sub" id="total-sub"></div>
+    </section>
+
+    <section class="tiles">
+      <div class="tile"><div class="label">Processed today</div><div class="value" id="today">–</div><div class="sub" id="today-sub"></div></div>
+      <div class="tile"><div class="label">Last hour</div><div class="value" id="hour">–</div><div class="sub">leads enriched</div></div>
+      <div class="tile"><div class="label">Sellers found</div><div class="value" id="found">–</div><div class="sub" id="found-sub"></div></div>
+      <div class="tile"><div class="label">Waiting in queue</div><div class="value" id="queue">–</div><div class="sub">to be enriched</div></div>
+      <div class="tile"><div class="label">Domains found</div><div class="value" id="domains">–</div><div class="sub" id="domains-sub"></div></div>
+      <div class="tile"><div class="label">Keepa tokens</div><div class="value" id="tokens">–</div><div class="sub" id="tokens-sub"></div></div>
+    </section>
+
+    <h2>Daily activity</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Date</th><th>Leads processed</th><th>No products</th><th>Details fetched</th><th>Sellers discovered</th><th>Domains filled</th></tr></thead>
+        <tbody id="daily"><tr><td colspan="6">Loading…</td></tr></tbody>
+      </table>
     </div>
-    <button class="alerts-btn" id="alerts-btn" hidden>Enable alerts</button>
+    <p class="note">"Leads processed" = sellers fully enriched with hero keyword and 2 competitors. Refreshes every 30 seconds. Times in your local time zone.</p>
   </section>
 
-  <section class="hero">
-    <div class="label">Total leads processed since start</div>
-    <div class="value" id="total">–</div>
-    <div class="sub" id="total-sub"></div>
-  </section>
+  <!-- ===================== DOMAIN FINDER ===================== -->
+  <section id="tab-domains" role="tabpanel" class="df" hidden>
+    <div class="panel" id="df-login">
+      <label for="df-member">Your name</label>
+      <input type="text" id="df-member" autocomplete="name" placeholder="e.g. Ayse">
+      <div class="row"><button class="btn primary" id="df-start">Start</button></div>
+      <div class="msg err" id="df-login-err" hidden></div>
+    </div>
 
-  <section class="tiles">
-    <div class="tile"><div class="label">Processed today</div><div class="value" id="today">–</div><div class="sub" id="today-sub"></div></div>
-    <div class="tile"><div class="label">Last hour</div><div class="value" id="hour">–</div><div class="sub">leads enriched</div></div>
-    <div class="tile"><div class="label">Sellers found</div><div class="value" id="found">–</div><div class="sub" id="found-sub"></div></div>
-    <div class="tile"><div class="label">Waiting in queue</div><div class="value" id="queue">–</div><div class="sub">to be enriched</div></div>
-    <div class="tile"><div class="label">Domains found</div><div class="value" id="domains">–</div><div class="sub" id="domains-sub"></div></div>
-    <div class="tile"><div class="label">Keepa tokens</div><div class="value" id="tokens">–</div><div class="sub" id="tokens-sub"></div></div>
-  </section>
+    <div id="df-work" hidden>
+      <div class="who" id="df-who"></div>
+      <div class="stats">
+        <div class="stat"><div class="label">You today</div><div class="value" id="s-mine">–</div></div>
+        <div class="stat"><div class="label">Team today</div><div class="value" id="s-team">–</div></div>
+        <div class="stat"><div class="label">Found</div><div class="value" id="s-found">–</div></div>
+        <div class="stat"><div class="label">Not found</div><div class="value" id="s-nf">–</div></div>
+        <div class="stat"><div class="label">Remaining</div><div class="value" id="s-rem">–</div></div>
+      </div>
 
-  <h2>Daily activity</h2>
-  <div class="table-wrap">
-    <table>
-      <thead><tr><th>Date</th><th>Leads processed</th><th>No products</th><th>Details fetched</th><th>Sellers discovered</th><th>Domains filled</th></tr></thead>
-      <tbody id="daily"><tr><td colspan="6">Loading…</td></tr></tbody>
-    </table>
-  </div>
-  <p class="note">"Leads processed" = sellers fully enriched with hero keyword and 2 competitors. Refreshes every 30 seconds. Times in your local time zone.</p>
+      <div class="panel" id="df-card">
+        <div class="editing" id="df-editing" hidden>Editing a previous entry</div>
+        <p class="seller-name"><a id="c-name" target="_blank" rel="noopener noreferrer">Loading…</a></p>
+        <dl class="facts">
+          <dt>Business name</dt><dd id="c-business"></dd>
+          <dt>Brand</dt><dd id="c-brand"></dd>
+          <dt>Address</dt><dd id="c-address"></dd>
+          <dt>Phone</dt><dd id="c-phone"></dd>
+          <dt>Best product</dt><dd id="c-product"></dd>
+          <dt>Hero keyword</dt><dd id="c-keyword"></dd>
+        </dl>
+        <div class="links" id="c-links"></div>
+
+        <label for="df-domain">Website domain</label>
+        <input type="text" id="df-domain" placeholder="brand.com" autocomplete="off" spellcheck="false">
+        <div class="preview" id="df-preview"></div>
+        <div class="row">
+          <button class="btn primary" id="df-save">Save <kbd>Enter</kbd></button>
+          <button class="btn" id="df-notfound">Not found <kbd>Shift+Enter</kbd></button>
+          <button class="btn" id="df-skip">Skip for now</button>
+        </div>
+        <div class="msg" id="df-msg" hidden></div>
+        <div class="last" id="df-last" hidden></div>
+      </div>
+
+      <div class="panel" id="df-empty" hidden>Nothing left to do right now. New sellers appear as the pipeline adds them.
+        <div class="row"><button class="btn" id="df-refresh">Check again</button></div></div>
+    </div>
+  </section>
 </main>
 
 <script>
-  // Supabase public (publishable/anon) key: safe to expose. Raw tables are locked by RLS;
-  // this key can only call the dashboard() function, which returns counts.
+  // Supabase public (anon) key: safe to expose. Raw tables are locked by RLS; this key can only call
+  // dashboard() (counts) and the domain_* functions (one seller card at a time + saving a domain).
   const SUPABASE_URL = "https://yttkhhtqgnsyhcnfvxsp.supabase.co";
   const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0dGtoaHRxZ25zeWhjbmZ2eHNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE1NDExNTIsImV4cCI6MjEwNzExNzE1Mn0.5cdygMrnCG7hdZPm5_LNrmgJQO9pqugce6LiJcfe1qo";
 
+  const $ = (id) => document.getElementById(id);
+  const store = {
+    get: (k) => { try { return localStorage.getItem(k) || ""; } catch { return ""; } },
+    set: (k, v) => { try { localStorage.setItem(k, v); } catch {} },
+  };
+
+  async function rpc(fn, body) {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {
+      method: "POST",
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const data = r.status === 204 ? null : await r.json().catch(() => null);
+    if (!r.ok) throw new Error((data && data.message) || `HTTP ${r.status}`);
+    return data;
+  }
+
+  // ===================== tabs =====================
+  let dfStarted = false;
+  function selectTab(name) {
+    for (const t of ["dashboard", "domains"]) {
+      $(`tab-${t}`).hidden = t !== name;
+      $(`tab-btn-${t}`).setAttribute("aria-selected", String(t === name));
+    }
+    if (location.hash !== `#${name}`) history.replaceState(null, "", `#${name}`);
+    if (name === "domains" && !dfStarted) { dfStarted = true; dfInit(); }
+  }
+  $("tab-btn-dashboard").onclick = () => selectTab("dashboard");
+  $("tab-btn-domains").onclick = () => selectTab("domains");
+  window.addEventListener("hashchange", () => selectTab(location.hash === "#domains" ? "domains" : "dashboard"));
+
+  // ===================== dashboard =====================
   const DAILY_TARGET = 1100;       // expected leads/day at 20 Keepa tokens/min
   const HEARTBEAT_STALE_MIN = 10;  // worker silent longer than this = down
   const ERROR_RECENT_MIN = 15;
-
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
-  const $ = (id) => document.getElementById(id);
   const fmt = (n) => (n ?? 0).toLocaleString();
   const ago = (iso) => {
     const s = Math.max(0, (Date.now() - new Date(iso)) / 1000);
@@ -155,19 +257,8 @@
     if (s < 5400) return `${Math.round(s / 60)} min ago`;
     return `${(s / 3600).toFixed(1)} h ago`;
   };
-  const todayStr = () => new Date().toLocaleDateString("en-CA", { timeZone: tz }); // YYYY-MM-DD
-
+  const todayStr = () => new Date().toLocaleDateString("en-CA", { timeZone: tz });
   let lastLevel = null;
-
-  async function load() {
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/dashboard`, {
-      method: "POST",
-      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ tz }),
-    });
-    if (!r.ok) throw new Error(`Database returned HTTP ${r.status}`);
-    return r.json();
-  }
 
   function health(d) {
     const issues = [];
@@ -214,11 +305,8 @@
     $("daily").innerHTML = rows || `<tr><td colspan="6">No activity yet.</td></tr>`;
 
     const { level, issues } = health(d);
-    setStatus(level, {
-      good: "All systems running",
-      warning: "Running with warnings",
-      critical: "System needs attention",
-    }[level], hb ? `Worker stage: ${hb.stage} · last heartbeat ${ago(hb.at)}` : "", issues);
+    setStatus(level, { good: "All systems running", warning: "Running with warnings", critical: "System needs attention" }[level],
+      hb ? `Worker stage: ${hb.stage} · last heartbeat ${ago(hb.at)}` : "", issues);
   }
 
   function setStatus(level, title, meta, issues) {
@@ -226,7 +314,7 @@
     $("status-icon").textContent = { good: "✓", warning: "!", critical: "✕" }[level];
     $("status-title").textContent = title;
     $("status-meta").textContent = meta;
-    $("status-issues").innerHTML = issues.map((i) => `<li>${i.replace(/[<>&]/g, "")}</li>`).join("");
+    $("status-issues").replaceChildren(...issues.map((i) => { const li = document.createElement("li"); li.textContent = i; return li; }));
     document.title = (level === "good" ? "" : level === "warning" ? "⚠ " : "🔴 ") + "Lead Pipeline";
     const color = { good: "%230ca30c", warning: "%23fab219", critical: "%23d03b3b" }[level];
     $("favicon").href = `data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><circle cx='8' cy='8' r='7' fill='${color}'/></svg>`;
@@ -238,7 +326,7 @@
 
   async function tick() {
     try {
-      render(await load());
+      render(await rpc("dashboard", { tz }));
       $("updated").textContent = `Updated ${new Date().toLocaleTimeString()}`;
     } catch (e) {
       setStatus("critical", "Can't reach the database", "", [String(e.message || e)]);
@@ -250,6 +338,138 @@
     $("alerts-btn").hidden = false;
     $("alerts-btn").onclick = () => Notification.requestPermission().then(() => ($("alerts-btn").hidden = true));
   }
+
+  // ===================== domain finder =====================
+  let member = store.get("df_member");
+  let current = null, last = null, editing = false, busy = false;
+
+  const normalize = (v) => (v || "").trim().toLowerCase()
+    .replace(/^[a-z]+:\/\//, "").replace(/^www\./, "").replace(/[\/?#:].*$/, "");
+  const looksLikeDomain = (d) => /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/.test(d);
+  const q = encodeURIComponent;
+
+  function dfStats(s) {
+    if (!s) return;
+    $("s-mine").textContent = fmt(s.mine_today); $("s-team").textContent = fmt(s.team_today);
+    $("s-found").textContent = fmt(s.found); $("s-nf").textContent = fmt(s.not_found); $("s-rem").textContent = fmt(s.remaining);
+  }
+  function dfMsg(text, kind) { $("df-msg").hidden = !text; $("df-msg").textContent = text || ""; $("df-msg").className = `msg ${kind || ""}`; }
+
+  function link(label, href, main) {
+    const a = document.createElement("a");
+    a.textContent = label; a.href = href; a.target = "_blank"; a.rel = "noopener noreferrer";
+    if (main) a.className = "main";
+    return a;
+  }
+
+  function dfShow(s) {
+    current = s;
+    $("df-card").hidden = !s; $("df-empty").hidden = !!s;
+    if (!s) return;
+    $("df-editing").hidden = !editing;
+    $("c-name").textContent = s.seller_name || s.seller_id;
+    $("c-name").href = s.storefront_url || `https://www.amazon.com/sp?seller=${s.seller_id}`;
+    $("c-business").textContent = s.business_name || "–";
+    $("c-brand").textContent = s.top_brand || "–";
+    $("c-address").textContent = s.address || "–";
+    $("c-phone").textContent = s.phone || "–";
+    $("c-product").textContent = s.best_title || "–";
+    $("c-keyword").textContent = s.hero_keyword || "–";
+
+    const brand = s.top_brand || s.seller_name || "";
+    const links = [
+      link("Seller storefront ↗", s.storefront_url || `https://www.amazon.com/sp?seller=${s.seller_id}`, true),
+      link("All seller products ↗", `https://www.amazon.com/s?me=${q(s.seller_id)}&marketplaceID=ATVPDKIKX0DER`, true),
+      s.best_asin && link("Best product ↗", `https://www.amazon.com/dp/${q(s.best_asin)}`, true),
+      link(`Google: ${brand} official site`, `https://www.google.com/search?q=${q(`"${brand}" official website`)}`),
+      s.business_name && link(`Google: ${s.business_name}`, `https://www.google.com/search?q=${q(`"${s.business_name}"`)}`),
+      s.seller_name && s.seller_name !== brand && link(`Google: ${s.seller_name}`, `https://www.google.com/search?q=${q(`"${s.seller_name}" website`)}`),
+      s.phone && link("Google: phone", `https://www.google.com/search?q=${q(`"${s.phone}"`)}`),
+    ].filter(Boolean);
+    $("c-links").replaceChildren(...links);
+
+    $("df-domain").value = editing && s.domain ? s.domain : "";
+    $("df-preview").textContent = "";
+    $("df-domain").focus();
+  }
+
+  function dfShowLast() {
+    if (!last) { $("df-last").hidden = true; return; }
+    $("df-last").hidden = false;
+    $("df-last").textContent = `Last saved: ${last.seller_name || last.seller_id} → ${last.domain_status === "found" ? last.domain : "not found"}`;
+    const b = document.createElement("button"); b.className = "btn"; b.textContent = "Edit";
+    b.onclick = () => { editing = true; dfShow(last); };
+    $("df-last").append(b);
+  }
+
+  async function dfNext() {
+    busy = true;
+    try { const r = await rpc("domain_next", { p_member: member }); editing = false; dfStats(r.stats); dfShow(r.seller); }
+    catch (e) { dfMsg(e.message, "err"); }
+    finally { busy = false; }
+  }
+
+  async function dfSave(notFound) {
+    if (busy || !current) return;
+    let domain = null;
+    if (!notFound) {
+      domain = normalize($("df-domain").value);
+      if (!looksLikeDomain(domain)) { dfMsg("Enter a domain like brand.com, or click Not found.", "err"); $("df-domain").focus(); return; }
+    }
+    busy = true;
+    try {
+      const r = await rpc("domain_save", { p_member: member, p_seller_id: current.seller_id, p_domain: domain, p_not_found: !!notFound });
+      last = r.saved; dfStats(r.stats); dfShowLast();
+      dfMsg(notFound ? "Marked as not found." : `Saved ${r.saved.domain}`, "ok");
+    } catch (e) { dfMsg(e.message, "err"); busy = false; return; }
+    busy = false;
+    await dfNext();
+  }
+
+  async function dfSkip() {
+    if (busy || !current) return;
+    if (editing) { editing = false; return dfNext(); }
+    busy = true;
+    try { await rpc("domain_skip", { p_member: member, p_seller_id: current.seller_id }); dfMsg("Skipped. It will come back later.", ""); }
+    catch (e) { dfMsg(e.message, "err"); }
+    busy = false;
+    await dfNext();
+  }
+
+  function dfInit() {
+    if (member) return dfEnter();
+    $("df-login").hidden = false; $("df-work").hidden = true;
+    $("df-member").focus();
+  }
+  function dfEnter() {
+    $("df-login").hidden = true; $("df-work").hidden = false;
+    $("df-who").textContent = `Working as ${member} · `;
+    const b = document.createElement("button"); b.textContent = "change name";
+    b.onclick = () => { $("df-member").value = member; $("df-login").hidden = false; $("df-work").hidden = true; $("df-member").focus(); };
+    $("df-who").append(b);
+    dfNext();
+  }
+  function dfStart() {
+    const name = $("df-member").value.trim();
+    if (!name) { $("df-login-err").hidden = false; $("df-login-err").textContent = "Enter your name."; return; }
+    $("df-login-err").hidden = true;
+    member = name; store.set("df_member", member); dfEnter();
+  }
+
+  $("df-start").onclick = dfStart;
+  $("df-member").addEventListener("keydown", (e) => { if (e.key === "Enter") dfStart(); });
+  $("df-save").onclick = () => dfSave(false);
+  $("df-notfound").onclick = () => dfSave(true);
+  $("df-skip").onclick = dfSkip;
+  $("df-refresh").onclick = dfNext;
+  $("df-domain").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); dfSave(e.shiftKey); } });
+  $("df-domain").addEventListener("input", () => {
+    const d = normalize($("df-domain").value);
+    $("df-preview").textContent = d ? (looksLikeDomain(d) ? `Will save: ${d}` : "Not a valid domain yet") : "";
+  });
+
+  // ===================== start =====================
+  selectTab(location.hash === "#domains" ? "domains" : "dashboard");
   tick();
   setInterval(tick, 30000);
 </script>
