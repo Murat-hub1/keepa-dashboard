@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lead Pipeline</title>
+<link rel="icon" id="favicon" href="data:,">
+<style>
+  :root {
+    --surface-0: #f4f4f2;
+    --surface-1: #fcfcfb;
+    --border: #e3e2de;
+    --text-primary: #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted: #7a7974;
+    --good: #0ca30c;
+    --warning: #fab219;
+    --critical: #d03b3b;
+    --good-bg: #e9f6e9;
+    --warning-bg: #fff6e0;
+    --critical-bg: #fbeaea;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --surface-0: #111110;
+      --surface-1: #1a1a19;
+      --border: #2e2e2c;
+      --text-primary: #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted: #8f8e86;
+      --good-bg: #13261a;
+      --warning-bg: #2b2412;
+      --critical-bg: #2e1616;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --surface-0: #111110;
+    --surface-1: #1a1a19;
+    --border: #2e2e2c;
+    --text-primary: #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted: #8f8e86;
+    --good-bg: #13261a;
+    --warning-bg: #2b2412;
+    --critical-bg: #2e1616;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--surface-0); color: var(--text-primary);
+    font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  main { max-width: 960px; margin: 0 auto; padding: 24px 16px 48px; }
+  header { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  h1 { font-size: 20px; margin: 0; font-weight: 600; }
+  .updated { color: var(--text-muted); font-size: 13px; }
+
+  .status {
+    margin: 16px 0 24px; padding: 14px 16px; border-radius: 10px;
+    display: flex; gap: 12px; align-items: flex-start; border: 1px solid var(--border);
+    background: var(--surface-1);
+  }
+  .status .icon { flex: none; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center;
+                  color: #fff; font-weight: 700; font-size: 14px; margin-top: 1px; }
+  .status.good     { background: var(--good-bg); }     .status.good .icon { background: var(--good); }
+  .status.warning  { background: var(--warning-bg); }  .status.warning .icon { background: var(--warning); color: #0b0b0b; }
+  .status.critical { background: var(--critical-bg); } .status.critical .icon { background: var(--critical); }
+  .status .title { font-weight: 600; }
+  .status ul { margin: 4px 0 0; padding-left: 18px; color: var(--text-secondary); font-size: 14px; }
+  .status .meta { color: var(--text-secondary); font-size: 13px; margin-top: 2px; }
+  .alerts-btn { margin-left: auto; flex: none; font: inherit; font-size: 13px; padding: 6px 10px; border-radius: 6px;
+                border: 1px solid var(--border); background: var(--surface-1); color: var(--text-primary); cursor: pointer; }
+
+  .hero { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+  .hero .label, .tile .label { color: var(--text-secondary); font-size: 13px; }
+  .hero .value { font-size: 56px; font-weight: 600; line-height: 1.1; margin-top: 4px; }
+  .hero .sub { color: var(--text-secondary); font-size: 14px; margin-top: 4px; }
+
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin: 12px 0 28px; }
+  .tile { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
+  .tile .value { font-size: 26px; font-weight: 600; margin-top: 2px; }
+  .tile .sub { color: var(--text-muted); font-size: 12px; }
+
+  h2 { font-size: 16px; margin: 0 0 10px; font-weight: 600; }
+  .table-wrap { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { padding: 10px 14px; text-align: right; white-space: nowrap; }
+  th:first-child, td:first-child { text-align: left; }
+  th { color: var(--text-secondary); font-weight: 500; border-bottom: 1px solid var(--border); font-size: 13px; }
+  td { font-variant-numeric: tabular-nums; border-bottom: 1px solid var(--border); }
+  tr:last-child td { border-bottom: 0; }
+  tr.today td { font-weight: 600; }
+  .note { color: var(--text-muted); font-size: 12px; margin-top: 10px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Lead Pipeline</h1>
+    <span class="updated" id="updated">Loading…</span>
+  </header>
+
+  <section class="status" id="status" role="status" aria-live="polite">
+    <span class="icon" id="status-icon">…</span>
+    <div>
+      <div class="title" id="status-title">Checking system health…</div>
+      <div class="meta" id="status-meta"></div>
+      <ul id="status-issues"></ul>
+    </div>
+    <button class="alerts-btn" id="alerts-btn" hidden>Enable alerts</button>
+  </section>
+
+  <section class="hero">
+    <div class="label">Total leads processed since start</div>
+    <div class="value" id="total">–</div>
+    <div class="sub" id="total-sub"></div>
+  </section>
+
+  <section class="tiles">
+    <div class="tile"><div class="label">Processed today</div><div class="value" id="today">–</div><div class="sub" id="today-sub"></div></div>
+    <div class="tile"><div class="label">Last hour</div><div class="value" id="hour">–</div><div class="sub">leads enriched</div></div>
+    <div class="tile"><div class="label">Sellers found</div><div class="value" id="found">–</div><div class="sub" id="found-sub"></div></div>
+    <div class="tile"><div class="label">Waiting in queue</div><div class="value" id="queue">–</div><div class="sub">to be enriched</div></div>
+    <div class="tile"><div class="label">Keepa tokens</div><div class="value" id="tokens">–</div><div class="sub" id="tokens-sub"></div></div>
+  </section>
+
+  <h2>Daily activity</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Date</th><th>Leads processed</th><th>No products</th><th>Details fetched</th><th>Sellers discovered</th></tr></thead>
+      <tbody id="daily"><tr><td colspan="5">Loading…</td></tr></tbody>
+    </table>
+  </div>
+  <p class="note">"Leads processed" = sellers fully enriched with hero keyword and 2 competitors. Refreshes every 30 seconds. Times in your local time zone.</p>
+</main>
+
+<script>
+  // Supabase public (publishable/anon) key: safe to expose. Raw tables are locked by RLS;
+  // this key can only call the dashboard() function, which returns counts.
+  const SUPABASE_URL = "https://yttkhhtqgnsyhcnfvxsp.supabase.co";
+  const SUPABASE_KEY = "__SUPABASE_PUBLISHABLE_KEY__";
+
+  const DAILY_TARGET = 1100;       // expected leads/day at 20 Keepa tokens/min
+  const HEARTBEAT_STALE_MIN = 10;  // worker silent longer than this = down
+  const ERROR_RECENT_MIN = 15;
+
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+  const $ = (id) => document.getElementById(id);
+  const fmt = (n) => (n ?? 0).toLocaleString();
+  const ago = (iso) => {
+    const s = Math.max(0, (Date.now() - new Date(iso)) / 1000);
+    if (s < 90) return `${Math.round(s)}s ago`;
+    if (s < 5400) return `${Math.round(s / 60)} min ago`;
+    return `${(s / 3600).toFixed(1)} h ago`;
+  };
+  const todayStr = () => new Date().toLocaleDateString("en-CA", { timeZone: tz }); // YYYY-MM-DD
+
+  let lastLevel = null;
+
+  async function load() {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/dashboard`, {
+      method: "POST",
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ tz }),
+    });
+    if (!r.ok) throw new Error(`Database returned HTTP ${r.status}`);
+    return r.json();
+  }
+
+  function health(d) {
+    const issues = [];
+    let level = "good";
+    const bump = (l) => { if (l === "critical" || (l === "warning" && level === "good")) level = l; };
+    const hb = d.heartbeat;
+    if (!hb) { bump("critical"); issues.push("Worker has never reported in."); }
+    else {
+      const ageMin = (Date.now() - new Date(hb.at)) / 60000;
+      if (ageMin > HEARTBEAT_STALE_MIN) { bump("critical"); issues.push(`Worker silent for ${Math.round(ageMin)} min. Check Railway.`); }
+      if (hb.last_error_at && (Date.now() - new Date(hb.last_error_at)) / 60000 < ERROR_RECENT_MIN) {
+        bump("warning"); issues.push(`Recent error (${ago(hb.last_error_at)}): ${hb.last_error}`);
+      }
+      const busy = d.last_hour.enriched + d.last_hour.detailed;
+      if (ageMin <= HEARTBEAT_STALE_MIN && busy === 0 && !["discovery", "idle", "starting"].includes(hb.stage)) {
+        bump("warning"); issues.push("No leads processed in the last hour.");
+      }
+    }
+    return { level, issues };
+  }
+
+  function render(d) {
+    const t = d.totals;
+    const today = (d.daily || []).find((r) => r.day === todayStr()) || { enriched: 0 };
+    $("total").textContent = fmt(t.enriched);
+    $("total-sub").textContent = `${fmt(t.no_products)} had no products · ${fmt(t.errors)} failed`;
+    $("today").textContent = fmt(today.enriched);
+    $("today-sub").textContent = `${Math.round((today.enriched / DAILY_TARGET) * 100)}% of ~${fmt(DAILY_TARGET)}/day target`;
+    $("hour").textContent = fmt(d.last_hour.enriched);
+    $("found").textContent = fmt(t.discovered);
+    $("found-sub").textContent = `${fmt(t.queue_details)} awaiting details`;
+    $("queue").textContent = fmt(t.queue_enrich + t.queue_details);
+    const hb = d.heartbeat;
+    $("tokens").textContent = hb ? fmt(hb.tokens_left) : "–";
+    $("tokens-sub").textContent = hb ? `refill ${hb.refill_rate}/min · near 0 = fully used` : "";
+
+    const rows = (d.daily || []).map((r) => `
+      <tr class="${r.day === todayStr() ? "today" : ""}">
+        <td>${new Date(r.day + "T12:00:00").toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}${r.day === todayStr() ? " (today)" : ""}</td>
+        <td>${fmt(r.enriched)}</td><td>${fmt(r.no_products)}</td><td>${fmt(r.detailed)}</td><td>${fmt(r.discovered)}</td>
+      </tr>`).join("");
+    $("daily").innerHTML = rows || `<tr><td colspan="5">No activity yet.</td></tr>`;
+
+    const { level, issues } = health(d);
+    setStatus(level, {
+      good: "All systems running",
+      warning: "Running with warnings",
+      critical: "System needs attention",
+    }[level], hb ? `Worker stage: ${hb.stage} · last heartbeat ${ago(hb.at)}` : "", issues);
+  }
+
+  function setStatus(level, title, meta, issues) {
+    $("status").className = `status ${level}`;
+    $("status-icon").textContent = { good: "✓", warning: "!", critical: "✕" }[level];
+    $("status-title").textContent = title;
+    $("status-meta").textContent = meta;
+    $("status-issues").innerHTML = issues.map((i) => `<li>${i.replace(/[<>&]/g, "")}</li>`).join("");
+    document.title = (level === "good" ? "" : level === "warning" ? "⚠ " : "🔴 ") + "Lead Pipeline";
+    const color = { good: "%230ca30c", warning: "%23fab219", critical: "%23d03b3b" }[level];
+    $("favicon").href = `data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><circle cx='8' cy='8' r='7' fill='${color}'/></svg>`;
+    if (lastLevel && level !== lastLevel && level !== "good" && "Notification" in window && Notification.permission === "granted") {
+      new Notification("Lead Pipeline: " + title, { body: issues.join("\n") });
+    }
+    lastLevel = level;
+  }
+
+  async function tick() {
+    try {
+      render(await load());
+      $("updated").textContent = `Updated ${new Date().toLocaleTimeString()}`;
+    } catch (e) {
+      setStatus("critical", "Can't reach the database", "", [String(e.message || e)]);
+      $("updated").textContent = `Last attempt ${new Date().toLocaleTimeString()}`;
+    }
+  }
+
+  if ("Notification" in window && Notification.permission === "default") {
+    $("alerts-btn").hidden = false;
+    $("alerts-btn").onclick = () => Notification.requestPermission().then(() => ($("alerts-btn").hidden = true));
+  }
+  tick();
+  setInterval(tick, 30000);
+</script>
+</body>
+</html>
