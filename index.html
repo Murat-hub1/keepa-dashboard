@@ -139,7 +139,7 @@
   // Supabase public (publishable/anon) key: safe to expose. Raw tables are locked by RLS;
   // this key can only call the dashboard() function, which returns counts.
   const SUPABASE_URL = "https://yttkhhtqgnsyhcnfvxsp.supabase.co";
-  const SUPABASE_KEY = "__SUPABASE_PUBLISHABLE_KEY__";
+  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0dGtoaHRxZ25zeWhjbmZ2eHNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE1NDExNTIsImV4cCI6MjEwNzExNzE1Mn0.5cdygMrnCG7hdZPm5_LNrmgJQO9pqugce6LiJcfe1qo";
 
   const DAILY_TARGET = 1100;       // expected leads/day at 20 Keepa tokens/min
   const HEARTBEAT_STALE_MIN = 10;  // worker silent longer than this = down
