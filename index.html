@@ -71,7 +71,10 @@
   .status .meta { color: var(--text-secondary); font-size: 13px; margin-top: 2px; }
   .alerts-btn { margin-left: auto; flex: none; font: inherit; font-size: 13px; padding: 6px 10px; border-radius: 6px;
                 border: 1px solid var(--border); background: var(--surface-1); color: var(--text-primary); cursor: pointer; }
+  .heroes { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  @media (max-width: 520px) { .heroes { grid-template-columns: 1fr; } }
   .hero { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+  .heroes .hero:first-child { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
   .hero .label, .tile .label { color: var(--text-secondary); font-size: 13px; }
   .hero .value { font-size: 56px; font-weight: 600; line-height: 1.1; margin-top: 4px; }
   .hero .sub { color: var(--text-secondary); font-size: 14px; margin-top: 4px; }
@@ -202,10 +205,17 @@
       <button class="alerts-btn" id="alerts-btn" hidden>Enable alerts</button>
     </section>
 
-    <section class="hero">
-      <div class="label">Total leads processed since start</div>
-      <div class="value" id="total">–</div>
-      <div class="sub" id="total-sub"></div>
+    <section class="heroes">
+      <div class="hero">
+        <div class="label">Domains found</div>
+        <div class="value" id="domains">–</div>
+        <div class="sub" id="domains-sub"></div>
+      </div>
+      <div class="hero">
+        <div class="label">Total leads processed</div>
+        <div class="value" id="total">–</div>
+        <div class="sub" id="total-sub"></div>
+      </div>
     </section>
 
     <section class="tiles">
@@ -213,7 +223,6 @@
       <div class="tile"><div class="label">Last hour</div><div class="value" id="hour">–</div><div class="sub">leads enriched</div></div>
       <div class="tile"><div class="label">Sellers found</div><div class="value" id="found">–</div><div class="sub" id="found-sub"></div></div>
       <div class="tile"><div class="label">Waiting in queue</div><div class="value" id="queue">–</div><div class="sub">to be enriched</div></div>
-      <div class="tile"><div class="label">Domains found</div><div class="value" id="domains">–</div><div class="sub" id="domains-sub"></div></div>
       <div class="tile"><div class="label">Keepa tokens</div><div class="value" id="tokens">–</div><div class="sub" id="tokens-sub"></div></div>
     </section>
 
