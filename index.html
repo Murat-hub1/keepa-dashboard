@@ -97,7 +97,9 @@
   /* ---------- domain finder ---------- */
   .df { max-width: 760px; }
   .panel { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
-  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; margin-bottom: 16px; }
+  .stats-group { margin-bottom: 16px; }
+  .stats-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted); margin-bottom: 6px; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; margin-bottom: 0; }
   .stat { background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
   .stat .label { color: var(--text-secondary); font-size: 12px; }
   .stat .value { font-size: 20px; font-weight: 600; }
@@ -260,12 +262,22 @@
       <div class="who" id="df-who"></div>
 
       <!-- Personal stats (everyone sees this) -->
-      <div class="stats">
-        <div class="stat"><div class="label">You today</div><div class="value" id="s-mine">–</div></div>
-        <div class="stat" id="stat-team" hidden><div class="label">Team today</div><div class="value" id="s-team">–</div></div>
-        <div class="stat"><div class="label">Found</div><div class="value" id="s-found">–</div></div>
-        <div class="stat"><div class="label">Not found</div><div class="value" id="s-nf">–</div></div>
-        <div class="stat"><div class="label">Remaining</div><div class="value" id="s-rem">–</div></div>
+      <div class="stats-group">
+        <div class="stats-label">Today</div>
+        <div class="stats">
+          <div class="stat"><div class="label">Done today</div><div class="value" id="s-mine">–</div></div>
+          <div class="stat"><div class="label">Found today</div><div class="value" id="s-found-today" style="color:var(--good)">–</div></div>
+          <div class="stat"><div class="label">Not found today</div><div class="value" id="s-nf-today">–</div></div>
+          <div class="stat"><div class="label">Skipped today</div><div class="value" id="s-skip-today">–</div></div>
+          <div class="stat" id="stat-team" hidden><div class="label">Team today</div><div class="value" id="s-team">–</div></div>
+        </div>
+        <div class="stats-label" style="margin-top:12px">Overall</div>
+        <div class="stats">
+          <div class="stat"><div class="label">Total found</div><div class="value" id="s-found" style="color:var(--good)">–</div></div>
+          <div class="stat"><div class="label">Total not found</div><div class="value" id="s-nf">–</div></div>
+          <div class="stat"><div class="label">Skipped (in queue)</div><div class="value" id="s-skip">–</div></div>
+          <div class="stat"><div class="label">Remaining</div><div class="value" id="s-rem">–</div></div>
+        </div>
       </div>
 
       <!-- Admin-only: team leaderboard + add teammate -->
@@ -458,11 +470,15 @@
 
   function dfStats(s) {
     if (!s) return;
-    $("s-mine").textContent = fmt(s.mine_today);
-    $("s-team").textContent = fmt(s.team_today);
-    $("s-found").textContent = fmt(s.found);
-    $("s-nf").textContent = fmt(s.not_found);
-    $("s-rem").textContent = fmt(s.remaining);
+    $("s-mine").textContent       = fmt(s.mine_today);
+    $("s-found-today").textContent = fmt(s.mine_found_today);
+    $("s-nf-today").textContent   = fmt(s.mine_nf_today);
+    $("s-skip-today").textContent = fmt(s.mine_skip_today);
+    $("s-team").textContent       = fmt(s.team_today);
+    $("s-found").textContent      = fmt(s.found);
+    $("s-nf").textContent         = fmt(s.not_found);
+    $("s-skip").textContent       = fmt(s.skipped);
+    $("s-rem").textContent        = fmt(s.remaining);
   }
   function dfMsg(text, kind) { $("df-msg").hidden = !text; $("df-msg").textContent = text || ""; $("df-msg").className = `msg ${kind || ""}`; }
 
