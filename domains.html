@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Domain Finder</title>
+<style>
+  :root {
+    --surface-0: #f4f4f2; --surface-1: #fcfcfb; --border: #e3e2de;
+    --text-primary: #0b0b0b; --text-secondary: #52514e; --text-muted: #7a7974;
+    --accent: #2a78d6; --accent-ink: #ffffff;
+    --good: #0ca30c; --critical: #d03b3b; --good-bg: #e9f6e9; --critical-bg: #fbeaea;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark; --surface-0: #111110; --surface-1: #1a1a19; --border: #2e2e2c;
+      --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #8f8e86;
+      --accent: #3987e5; --good-bg: #13261a; --critical-bg: #2e1616;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark; --surface-0: #111110; --surface-1: #1a1a19; --border: #2e2e2c;
+    --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #8f8e86;
+    --accent: #3987e5; --good-bg: #13261a; --critical-bg: #2e1616;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--surface-0); color: var(--text-primary);
+         font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 24px 16px 48px; }
+  header { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+  h1 { font-size: 20px; margin: 0; font-weight: 600; }
+  a { color: var(--accent); }
+  .muted { color: var(--text-muted); font-size: 13px; }
+  .panel { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; margin-bottom: 16px; }
+  .stat { background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+  .stat .label { color: var(--text-secondary); font-size: 12px; }
+  .stat .value { font-size: 20px; font-weight: 600; }
+
+  label { display: block; font-size: 13px; color: var(--text-secondary); margin: 0 0 4px; }
+  input[type=text], input[type=password] {
+    width: 100%; font: inherit; font-size: 16px; padding: 10px 12px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--surface-0); color: var(--text-primary);
+  }
+  input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  button { font: inherit; padding: 9px 14px; border-radius: 8px; border: 1px solid var(--border);
+           background: var(--surface-1); color: var(--text-primary); cursor: pointer; }
+  button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+  button:disabled { opacity: .5; cursor: default; }
+  kbd { font: 11px ui-monospace, Menlo, monospace; border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; color: var(--text-muted); }
+
+  .seller-name { font-size: 22px; font-weight: 600; margin: 0; }
+  .facts { display: grid; grid-template-columns: 130px 1fr; gap: 4px 12px; margin: 12px 0; font-size: 14px; }
+  .facts dt { color: var(--text-secondary); }
+  .facts dd { margin: 0; overflow-wrap: anywhere; }
+  .links { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 16px; }
+  .links a { font-size: 13px; text-decoration: none; border: 1px solid var(--border); border-radius: 999px; padding: 4px 10px; }
+  .links a:hover { border-color: var(--accent); }
+  .preview { font-size: 13px; color: var(--text-muted); min-height: 18px; margin-top: 4px; }
+
+  .msg { border-radius: 8px; padding: 8px 12px; margin-top: 12px; font-size: 14px; }
+  .msg.ok { background: var(--good-bg); }
+  .msg.err { background: var(--critical-bg); }
+  .last { margin-top: 14px; font-size: 13px; color: var(--text-secondary); }
+  .last button { padding: 2px 8px; font-size: 12px; margin-left: 6px; }
+  .editing { font-size: 13px; font-weight: 600; color: var(--critical); margin-bottom: 6px; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Domain Finder</h1>
+    <span class="muted"><a href="./">Dashboard</a> · <span id="who"></span> <a href="#" id="signout" hidden>switch user</a></span>
+  </header>
+
+  <!-- Sign in -->
+  <section class="panel" id="login">
+    <label for="member">Your name</label>
+    <input type="text" id="member" autocomplete="name" placeholder="e.g. Ayse">
+    <div style="height:12px"></div>
+    <label for="passcode">Team passcode</label>
+    <input type="password" id="passcode" autocomplete="current-password">
+    <div class="row"><button class="primary" id="start">Start</button></div>
+    <div class="msg err" id="login-err" hidden></div>
+  </section>
+
+  <!-- Work -->
+  <section id="work" hidden>
+    <div class="stats">
+      <div class="stat"><div class="label">You today</div><div class="value" id="s-mine">–</div></div>
+      <div class="stat"><div class="label">Team today</div><div class="value" id="s-team">–</div></div>
+      <div class="stat"><div class="label">Found</div><div class="value" id="s-found">–</div></div>
+      <div class="stat"><div class="label">Not found</div><div class="value" id="s-nf">–</div></div>
+      <div class="stat"><div class="label">Remaining</div><div class="value" id="s-rem">–</div></div>
+    </div>
+
+    <div class="panel" id="card">
+      <div class="editing" id="editing" hidden>Editing a previous entry</div>
+      <p class="seller-name" id="c-name">Loading…</p>
+      <dl class="facts">
+        <dt>Business name</dt><dd id="c-business"></dd>
+        <dt>Brand</dt><dd id="c-brand"></dd>
+        <dt>Address</dt><dd id="c-address"></dd>
+        <dt>Phone</dt><dd id="c-phone"></dd>
+        <dt>Best product</dt><dd id="c-product"></dd>
+        <dt>Hero keyword</dt><dd id="c-keyword"></dd>
+      </dl>
+      <div class="links" id="c-links"></div>
+
+      <label for="domain">Website domain</label>
+      <input type="text" id="domain" placeholder="brand.com" autocomplete="off" spellcheck="false">
+      <div class="preview" id="preview"></div>
+      <div class="row">
+        <button class="primary" id="save">Save <kbd>Enter</kbd></button>
+        <button id="notfound">Not found <kbd>Shift+Enter</kbd></button>
+        <button id="skip">Skip for now</button>
+      </div>
+      <div class="msg" id="msg" hidden></div>
+      <div class="last" id="last" hidden></div>
+    </div>
+
+    <div class="panel" id="empty" hidden>🎉 Nothing left to do right now. New sellers appear as the pipeline adds them.
+      <div class="row"><button id="refresh">Check again</button></div></div>
+  </section>
+</main>
+
+<script>
+  const SUPABASE_URL = "https://yttkhhtqgnsyhcnfvxsp.supabase.co";
+  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0dGtoaHRxZ25zeWhjbmZ2eHNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE1NDExNTIsImV4cCI6MjEwNzExNzE1Mn0.5cdygMrnCG7hdZPm5_LNrmgJQO9pqugce6LiJcfe1qo";
+  const $ = (id) => document.getElementById(id);
+
+  const store = {
+    get: (k) => { try { return localStorage.getItem(k) || ""; } catch { return ""; } },
+    set: (k, v) => { try { localStorage.setItem(k, v); } catch {} },
+    del: (k) => { try { localStorage.removeItem(k); } catch {} },
+  };
+
+  let member = store.get("df_member"), passcode = store.get("df_passcode");
+  let current = null;      // seller on screen
+  let last = null;         // last saved seller (for edit)
+  let editing = false;
+  let busy = false;
+
+  async function rpc(fn, body) {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {
+      method: "POST",
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ p_passcode: passcode, p_member: member, ...body }),
+    });
+    const data = r.status === 204 ? null : await r.json().catch(() => null);
+    if (!r.ok) throw new Error((data && data.message) || `HTTP ${r.status}`);
+    return data;
+  }
+
+  function normalize(v) {
+    let d = (v || "").trim().toLowerCase();
+    d = d.replace(/^[a-z]+:\/\//, "").replace(/^www\./, "").replace(/[\/?#:].*$/, "");
+    return d;
+  }
+  const looksLikeDomain = (d) => /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/.test(d);
+
+  function stats(s) {
+    if (!s) return;
+    $("s-mine").textContent = s.mine_today.toLocaleString();
+    $("s-team").textContent = s.team_today.toLocaleString();
+    $("s-found").textContent = s.found.toLocaleString();
+    $("s-nf").textContent = s.not_found.toLocaleString();
+    $("s-rem").textContent = s.remaining.toLocaleString();
+  }
+
+  function msg(text, kind) {
+    $("msg").hidden = !text; $("msg").textContent = text || ""; $("msg").className = `msg ${kind || ""}`;
+  }
+
+  function q(s) { return encodeURIComponent(s); }
+
+  function show(s) {
+    current = s;
+    $("card").hidden = !s; $("empty").hidden = !!s;
+    if (!s) return;
+    $("editing").hidden = !editing;
+    $("c-name").textContent = s.seller_name || s.seller_id;
+    $("c-business").textContent = s.business_name || "–";
+    $("c-brand").textContent = s.top_brand || "–";
+    $("c-address").textContent = s.address || "–";
+    $("c-phone").textContent = s.phone || "–";
+    $("c-product").textContent = s.best_title || "–";
+    $("c-keyword").textContent = s.hero_keyword || "–";
+
+    const brand = s.top_brand || s.seller_name || "";
+    const links = [
+      ["Amazon storefront", s.storefront_url],
+      [`Google: ${brand} official site`, `https://www.google.com/search?q=${q(`"${brand}" official website`)}`],
+      s.business_name && [`Google: ${s.business_name}`, `https://www.google.com/search?q=${q(`"${s.business_name}"`)}`],
+      s.seller_name && s.seller_name !== brand && [`Google: ${s.seller_name}`, `https://www.google.com/search?q=${q(`"${s.seller_name}" website`)}`],
+      s.phone && [`Google: phone`, `https://www.google.com/search?q=${q(`"${s.phone}"`)}`],
+    ].filter(Boolean);
+    $("c-links").replaceChildren(...links.map(([label, href]) => {
+      const a = document.createElement("a"); a.textContent = label; a.href = href; a.target = "_blank"; a.rel = "noopener noreferrer"; return a;
+    }));
+
+    $("domain").value = editing && s.domain ? s.domain : "";
+    $("preview").textContent = "";
+    $("domain").focus();
+  }
+
+  function showLast() {
+    if (!last) { $("last").hidden = true; return; }
+    $("last").hidden = false;
+    $("last").textContent = `Last saved: ${last.seller_name || last.seller_id} → ${last.domain_status === "found" ? last.domain : "not found"}`;
+    const b = document.createElement("button"); b.textContent = "Edit";
+    b.onclick = () => { editing = true; show(last); };
+    $("last").append(b);
+  }
+
+  async function next() {
+    busy = true;
+    try {
+      const r = await rpc("domain_next", {});
+      editing = false;
+      stats(r.stats); show(r.seller);
+    } catch (e) {
+      if (/passcode|name/i.test(e.message)) return signOut(e.message);
+      msg(e.message, "err");
+    } finally { busy = false; }
+  }
+
+  async function save(notFound) {
+    if (busy || !current) return;
+    let domain = null;
+    if (!notFound) {
+      domain = normalize($("domain").value);
+      if (!looksLikeDomain(domain)) { msg("Enter a domain like brand.com, or click Not found.", "err"); $("domain").focus(); return; }
+    }
+    busy = true;
+    try {
+      const r = await rpc("domain_save", { p_seller_id: current.seller_id, p_domain: domain, p_not_found: !!notFound });
+      last = r.saved; stats(r.stats); showLast();
+      msg(notFound ? "Marked as not found." : `Saved ${r.saved.domain}`, "ok");
+    } catch (e) { msg(e.message, "err"); busy = false; return; }
+    busy = false;
+    await next();
+  }
+
+  async function skip() {
+    if (busy || !current) return;
+    if (editing) { editing = false; return next(); }
+    busy = true;
+    try { await rpc("domain_skip", { p_seller_id: current.seller_id }); msg("Skipped. It will come back later.", ""); }
+    catch (e) { msg(e.message, "err"); }
+    busy = false;
+    await next();
+  }
+
+  function signOut(error) {
+    store.del("df_passcode"); passcode = "";
+    $("work").hidden = true; $("login").hidden = false; $("signout").hidden = true; $("who").textContent = "";
+    $("member").value = member || "";
+    $("login-err").hidden = !error; $("login-err").textContent = error || "";
+  }
+
+  async function start() {
+    member = $("member").value.trim(); passcode = $("passcode").value;
+    if (!member) { $("login-err").hidden = false; $("login-err").textContent = "Enter your name."; return; }
+    store.set("df_member", member); store.set("df_passcode", passcode);
+    enter();
+  }
+
+  function enter() {
+    $("login").hidden = true; $("work").hidden = false; $("signout").hidden = false;
+    $("who").textContent = `Signed in as ${member} ·`;
+    next();
+  }
+
+  $("start").onclick = start;
+  $("passcode").addEventListener("keydown", (e) => { if (e.key === "Enter") start(); });
+  $("save").onclick = () => save(false);
+  $("notfound").onclick = () => save(true);
+  $("skip").onclick = skip;
+  $("refresh").onclick = next;
+  $("signout").onclick = (e) => { e.preventDefault(); signOut(); };
+  $("domain").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); save(e.shiftKey); }
+  });
+  $("domain").addEventListener("input", () => {
+    const d = normalize($("domain").value);
+    $("preview").textContent = d ? (looksLikeDomain(d) ? `Will save: ${d}` : "Not a valid domain yet") : "";
+  });
+
+  if (member && passcode) enter(); else signOut();
+</script>
+</body>
+</html>

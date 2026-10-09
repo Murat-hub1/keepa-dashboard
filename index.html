@@ -98,7 +98,7 @@
 <main>
   <header>
     <h1>Lead Pipeline</h1>
-    <span class="updated" id="updated">Loading…</span>
+    <span class="updated"><a href="domains.html" style="color:inherit">Domain Finder →</a> · <span id="updated">Loading…</span></span>
   </header>
 
   <section class="status" id="status" role="status" aria-live="polite">
@@ -122,14 +122,15 @@
     <div class="tile"><div class="label">Last hour</div><div class="value" id="hour">–</div><div class="sub">leads enriched</div></div>
     <div class="tile"><div class="label">Sellers found</div><div class="value" id="found">–</div><div class="sub" id="found-sub"></div></div>
     <div class="tile"><div class="label">Waiting in queue</div><div class="value" id="queue">–</div><div class="sub">to be enriched</div></div>
+    <div class="tile"><div class="label">Domains found</div><div class="value" id="domains">–</div><div class="sub" id="domains-sub"></div></div>
     <div class="tile"><div class="label">Keepa tokens</div><div class="value" id="tokens">–</div><div class="sub" id="tokens-sub"></div></div>
   </section>
 
   <h2>Daily activity</h2>
   <div class="table-wrap">
     <table>
-      <thead><tr><th>Date</th><th>Leads processed</th><th>No products</th><th>Details fetched</th><th>Sellers discovered</th></tr></thead>
-      <tbody id="daily"><tr><td colspan="5">Loading…</td></tr></tbody>
+      <thead><tr><th>Date</th><th>Leads processed</th><th>No products</th><th>Details fetched</th><th>Sellers discovered</th><th>Domains filled</th></tr></thead>
+      <tbody id="daily"><tr><td colspan="6">Loading…</td></tr></tbody>
     </table>
   </div>
   <p class="note">"Leads processed" = sellers fully enriched with hero keyword and 2 competitors. Refreshes every 30 seconds. Times in your local time zone.</p>
@@ -199,6 +200,8 @@
     $("found").textContent = fmt(t.discovered);
     $("found-sub").textContent = `${fmt(t.queue_details)} awaiting details`;
     $("queue").textContent = fmt(t.queue_enrich + t.queue_details);
+    $("domains").textContent = fmt(t.domains_found);
+    $("domains-sub").textContent = `${fmt(t.domains_not_found)} not found`;
     const hb = d.heartbeat;
     $("tokens").textContent = hb ? fmt(hb.tokens_left) : "–";
     $("tokens-sub").textContent = hb ? `refill ${hb.refill_rate}/min · near 0 = fully used` : "";
@@ -206,9 +209,9 @@
     const rows = (d.daily || []).map((r) => `
       <tr class="${r.day === todayStr() ? "today" : ""}">
         <td>${new Date(r.day + "T12:00:00").toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}${r.day === todayStr() ? " (today)" : ""}</td>
-        <td>${fmt(r.enriched)}</td><td>${fmt(r.no_products)}</td><td>${fmt(r.detailed)}</td><td>${fmt(r.discovered)}</td>
+        <td>${fmt(r.enriched)}</td><td>${fmt(r.no_products)}</td><td>${fmt(r.detailed)}</td><td>${fmt(r.discovered)}</td><td>${fmt(r.domains)}</td>
       </tr>`).join("");
-    $("daily").innerHTML = rows || `<tr><td colspan="5">No activity yet.</td></tr>`;
+    $("daily").innerHTML = rows || `<tr><td colspan="6">No activity yet.</td></tr>`;
 
     const { level, issues } = health(d);
     setStatus(level, {
