@@ -146,6 +146,14 @@
   .add-msg { font-size: 13px; margin-top: 8px; min-height: 18px; }
   .add-msg.ok { color: var(--good); }
   .add-msg.err { color: var(--critical); }
+  .btn.sm { padding: 4px 8px; font-size: 12px; }
+  .btn.danger { background: var(--critical-bg); color: var(--critical); border-color: var(--critical); }
+  .pwd-reveal { margin-top: 8px; display: flex; gap: 6px; align-items: center; }
+  .pwd-reveal input { font: 13px ui-monospace, monospace; padding: 6px 10px; border-radius: 6px;
+                      border: 1px solid var(--border); background: var(--surface-0); color: var(--text-primary);
+                      flex: 1; margin: 0; }
+  .reset-row td { background: var(--warning-bg); padding: 8px 12px; }
+  .reset-row .row { margin-top: 8px; }
 </style>
 </head>
 <body>
@@ -257,7 +265,7 @@
         <div class="admin-block">
           <h3>Team activity</h3>
           <table class="team-table">
-            <thead><tr><th>Member</th><th>Today</th><th>All time</th><th>Found</th><th>Not found</th></tr></thead>
+            <thead><tr><th>Member</th><th>Today</th><th>All time</th><th>Found</th><th>Not found</th><th></th></tr></thead>
             <tbody id="df-team-body"><tr><td colspan="5" style="color:var(--text-muted);padding:10px 12px">Loading…</td></tr></tbody>
           </table>
         </div>
@@ -540,13 +548,57 @@
       const rows = await rpc("admin_team_stats", { p_name: member, p_password: password });
       const tbody = $("df-team-body");
       if (!rows || !rows.length) {
-        tbody.innerHTML = `<tr><td colspan="5" style="color:var(--text-muted);padding:10px 12px">No domain activity yet.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" style="color:var(--text-muted);padding:10px 12px">No team members yet.</td></tr>`;
         return;
       }
-      tbody.innerHTML = rows.map(r =>
-        `<tr><td>${r.member}</td><td>${fmt(r.today)}</td><td>${fmt(r.total)}</td><td>${fmt(r.found)}</td><td>${fmt(r.not_found)}</td></tr>`
+      tbody.innerHTML = rows.map(r => `
+        <tr id="tr-${CSS.escape(r.member)}">
+          <td>${r.member}</td>
+          <td>${fmt(r.today)}</td><td>${fmt(r.total)}</td><td>${fmt(r.found)}</td><td>${fmt(r.not_found)}</td>
+          <td style="text-align:right;white-space:nowrap">
+            <button class="btn sm" onclick="dfShowReset(${JSON.stringify(r.member)})">Reset pwd</button>
+            <button class="btn sm danger" style="margin-left:4px" onclick="dfDeleteMember(${JSON.stringify(r.member)})">Delete</button>
+          </td>
+        </tr>
+        <tr id="reset-row-${CSS.escape(r.member)}" class="reset-row" hidden>
+          <td colspan="6">
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <span style="font-size:13px;font-weight:600">New password for ${r.member}:</span>
+              <input type="text" id="reset-pwd-${CSS.escape(r.member)}" placeholder="new password" style="max-width:200px;margin:0;padding:6px 10px;font-size:13px;border-radius:6px;border:1px solid var(--border);background:var(--surface-0);color:var(--text-primary)">
+              <button class="btn sm primary" onclick="dfResetPwd(${JSON.stringify(r.member)})">Save</button>
+              <button class="btn sm" onclick="dfHideReset(${JSON.stringify(r.member)})">Cancel</button>
+              <span id="reset-msg-${CSS.escape(r.member)}" style="font-size:13px"></span>
+            </div>
+          </td>
+        </tr>`
       ).join("");
-    } catch (e) { /* silently fail — admin_team_stats may not exist yet */ }
+    } catch (e) { /* silently fail */ }
+  }
+
+  function dfShowReset(name) {
+    $(`reset-row-${CSS.escape(name)}`).hidden = false;
+    $(`reset-pwd-${CSS.escape(name)}`).focus();
+  }
+  function dfHideReset(name) { $(`reset-row-${CSS.escape(name)}`).hidden = true; }
+
+  async function dfResetPwd(name) {
+    const newPwd = $(`reset-pwd-${CSS.escape(name)}`).value;
+    const msgEl = $(`reset-msg-${CSS.escape(name)}`);
+    if (!newPwd) { msgEl.textContent = "Enter a password."; msgEl.style.color = "var(--critical)"; return; }
+    try {
+      await rpc("admin_reset_password", { p_admin_name: member, p_admin_password: password, p_target_name: name, p_new_password: newPwd });
+      msgEl.style.color = "var(--good)";
+      msgEl.innerHTML = `✓ Saved. New password: <strong>${newPwd}</strong> &nbsp;<button class="btn sm" onclick="navigator.clipboard.writeText(${JSON.stringify(newPwd)});this.textContent='Copied!'">Copy</button>`;
+      $(`reset-pwd-${CSS.escape(name)}`).value = "";
+    } catch (e) { msgEl.textContent = e.message; msgEl.style.color = "var(--critical)"; }
+  }
+
+  async function dfDeleteMember(name) {
+    if (!confirm(`Delete ${name}? They will no longer be able to log in.`)) return;
+    try {
+      await rpc("admin_delete_member", { p_admin_name: member, p_admin_password: password, p_target_name: name });
+      dfLoadTeam();
+    } catch (e) { alert(e.message); }
   }
 
   async function dfAddMember() {
@@ -554,14 +606,19 @@
     const newPwd  = $("new-member-pwd").value;
     const msg = $("df-add-msg");
     msg.className = "add-msg";
-    if (!newName || !newPwd) { msg.textContent = "Name and password are both required."; msg.className = "add-msg err"; return; }
+    if (!newName || !newPwd) { msg.className = "add-msg err"; msg.textContent = "Name and password are both required."; return; }
     try {
       await rpc("team_add_member", { p_admin_name: member, p_admin_password: password, p_new_name: newName, p_new_password: newPwd });
-      msg.textContent = `✓ ${newName} added. Share their password with them.`;
       msg.className = "add-msg ok";
+      msg.innerHTML = `✓ ${newName} added.
+        <div class="pwd-reveal">
+          <span style="font-size:13px;white-space:nowrap">Password:</span>
+          <input type="text" readonly value="${newPwd.replace(/"/g,'&quot;')}">
+          <button class="btn sm" onclick="navigator.clipboard.writeText(${JSON.stringify(newPwd)});this.textContent='Copied!'">Copy</button>
+        </div>`;
       $("new-member-name").value = ""; $("new-member-pwd").value = "";
       dfLoadTeam();
-    } catch (e) { msg.textContent = e.message; msg.className = "add-msg err"; }
+    } catch (e) { msg.className = "add-msg err"; msg.textContent = e.message; }
   }
 
   // ---------- auth flow ----------
