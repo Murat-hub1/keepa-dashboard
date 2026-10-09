@@ -29,6 +29,18 @@
   body { margin: 0; background: var(--surface-0); color: var(--text-primary);
          font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
   main { max-width: 960px; margin: 0 auto; padding: 24px 16px 48px; }
+
+  /* ---------- full-page login overlay ---------- */
+  #page-login {
+    position: fixed; inset: 0; background: var(--surface-0);
+    display: flex; align-items: center; justify-content: center; z-index: 100;
+  }
+  #page-login .login-box {
+    background: var(--surface-1); border: 1px solid var(--border); border-radius: 16px;
+    padding: 32px; width: 100%; max-width: 380px; box-shadow: 0 4px 24px rgba(0,0,0,.08);
+  }
+  #page-login h1 { font-size: 20px; margin: 0 0 6px; }
+  #page-login .subtitle { color: var(--text-secondary); font-size: 14px; margin: 0 0 24px; }
   a { color: var(--accent); }
   [hidden] { display: none !important; }
 
@@ -131,7 +143,24 @@
 </style>
 </head>
 <body>
-<main>
+
+<!-- Full-page login — shown until authenticated -->
+<div id="page-login">
+  <div class="login-box">
+    <h1>primeamz</h1>
+    <p class="subtitle">Lead Pipeline · Sign in to continue</p>
+    <label for="pl-name">Your name</label>
+    <input type="text" id="pl-name" autocomplete="name" placeholder="e.g. Lakhan">
+    <label for="pl-pwd">Password</label>
+    <input type="password" id="pl-pwd" autocomplete="current-password" placeholder="••••••••">
+    <div class="row" style="margin-top:16px">
+      <button class="btn primary" id="pl-submit" style="width:100%">Sign in</button>
+    </div>
+    <div class="msg err" id="pl-err" hidden style="margin-top:12px"></div>
+  </div>
+</div>
+
+<main hidden>
   <header>
     <h1>primeamz Lead Pipeline</h1>
     <span class="updated" id="updated">Loading…</span>
@@ -140,6 +169,8 @@
   <nav class="tabs" role="tablist">
     <button role="tab" id="tab-btn-dashboard" aria-controls="tab-dashboard" aria-selected="true">Dashboard</button>
     <button role="tab" id="tab-btn-domains" aria-controls="tab-domains" aria-selected="false">Domain Finder</button>
+    <span style="flex:1"></span>
+    <span id="header-who" style="font-size:13px;color:var(--text-muted);align-self:center;padding:0 4px"></span>
   </nav>
 
   <!-- ===================== DASHBOARD ===================== -->
@@ -301,7 +332,7 @@
       $(`tab-btn-${t}`).setAttribute("aria-selected", String(t === name));
     }
     if (location.hash !== `#${name}`) history.replaceState(null, "", `#${name}`);
-    if (name === "domains" && !dfStarted) { dfStarted = true; dfInit(); }
+    if (name === "domains" && !dfStarted) { dfStarted = true; /* already handled by pageEnter */ }
   }
   $("tab-btn-dashboard").onclick = () => selectTab("dashboard");
   $("tab-btn-domains").onclick = () => selectTab("domains");
@@ -601,10 +632,82 @@
     $("df-preview").textContent = d ? (looksLikeDomain(d) ? `Will save: ${d}` : "Not a valid domain yet") : "";
   });
 
+  // ===================== page-level login =====================
+  async function pageLogin() {
+    const name = $("pl-name").value.trim();
+    const pwd  = $("pl-pwd").value;
+    const err  = $("pl-err");
+    if (!name) { err.hidden = false; err.textContent = "Enter your name."; return; }
+    if (!pwd)  { err.hidden = false; err.textContent = "Enter your password."; return; }
+    err.hidden = true;
+    $("pl-submit").disabled = true;
+    try {
+      const r = await rpc("team_login", { p_name: name, p_password: pwd });
+      member = r.name; password = pwd; role = r.role;
+      store.set("df_member", member); store.set("df_pwd", password); store.set("df_role", role);
+      pageEnter();
+    } catch (e) {
+      err.hidden = false; err.textContent = e.message;
+    } finally {
+      $("pl-submit").disabled = false;
+    }
+  }
+
+  function pageSignOut() {
+    member = ""; password = ""; role = "";
+    store.set("df_member", ""); store.set("df_pwd", ""); store.set("df_role", "");
+    $("page-login").hidden = false;
+    $("main").hidden = true;
+    $("pl-name").value = ""; $("pl-pwd").value = "";
+    $("pl-err").hidden = true;
+    $("pl-name").focus();
+  }
+
+  function pageEnter() {
+    $("page-login").hidden = true;
+    $("main").hidden = false;
+
+    // Show name + sign out in the tab bar
+    $("header-who").innerHTML = "";
+    const nameSpan = document.createElement("span");
+    nameSpan.textContent = member + " · ";
+    const soBtn = document.createElement("button");
+    soBtn.textContent = "sign out";
+    soBtn.style.cssText = "font:inherit;font-size:13px;background:none;border:0;color:var(--accent);cursor:pointer;padding:0;text-decoration:underline";
+    soBtn.onclick = pageSignOut;
+    $("header-who").append(nameSpan, soBtn);
+
+    // Admins see Dashboard tab; teammates go straight to Domain Finder
+    if (role === "admin") {
+      $("tab-btn-dashboard").hidden = false;
+      const tab = location.hash === "#domains" ? "domains" : "dashboard";
+      selectTab(tab);
+      tick();
+      setInterval(tick, 30000);
+    } else {
+      $("tab-btn-dashboard").hidden = true;
+      selectTab("domains");
+    }
+
+    // Pre-fill and skip the df login panel since we already have creds
+    dfStarted = true;
+    dfEnter();
+  }
+
   // ===================== start =====================
-  selectTab(location.hash === "#domains" ? "domains" : "dashboard");
-  tick();
-  setInterval(tick, 30000);
+  $("pl-submit").onclick = pageLogin;
+  $("pl-name").addEventListener("keydown",  (e) => { if (e.key === "Enter") $("pl-pwd").focus(); });
+  $("pl-pwd").addEventListener("keydown",   (e) => { if (e.key === "Enter") pageLogin(); });
+
+  // Auto-login from stored session
+  if (member && password) {
+    // Validate stored session silently; sign out if it fails
+    rpc("team_login", { p_name: member, p_password: password })
+      .then(r => { role = r.role; store.set("df_role", role); pageEnter(); })
+      .catch(() => { store.set("df_member",""); store.set("df_pwd",""); store.set("df_role",""); $("pl-name").focus(); });
+  } else {
+    $("pl-name").focus();
+  }
 </script>
 </body>
 </html>
