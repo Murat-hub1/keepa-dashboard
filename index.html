@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Lead Pipeline</title>
+<title>primeamz Lead Pipeline</title>
 <link rel="icon" id="favicon" href="data:,">
 <style>
   :root {
@@ -62,6 +62,7 @@
   .tile .value { font-size: 26px; font-weight: 600; margin-top: 2px; }
   .tile .sub { color: var(--text-muted); font-size: 12px; }
   h2 { font-size: 16px; margin: 0 0 10px; font-weight: 600; }
+  h3 { font-size: 14px; font-weight: 600; margin: 0 0 10px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .04em; }
   .table-wrap { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; overflow-x: auto; }
   table { width: 100%; border-collapse: collapse; font-size: 14px; }
   th, td { padding: 10px 14px; text-align: right; white-space: nowrap; }
@@ -80,15 +81,19 @@
   .stat .label { color: var(--text-secondary); font-size: 12px; }
   .stat .value { font-size: 20px; font-weight: 600; }
   label { display: block; font-size: 13px; color: var(--text-secondary); margin: 0 0 4px; }
-  input[type=text] { width: 100%; font: inherit; font-size: 16px; padding: 10px 12px; border-radius: 8px;
-                     border: 1px solid var(--border); background: var(--surface-0); color: var(--text-primary); }
+  input[type=text], input[type=password] {
+    width: 100%; font: inherit; font-size: 16px; padding: 10px 12px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--surface-0); color: var(--text-primary); margin-bottom: 10px; }
   input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
   .row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; align-items: center; }
   .btn { font: inherit; padding: 9px 14px; border-radius: 8px; border: 1px solid var(--border);
          background: var(--surface-1); color: var(--text-primary); cursor: pointer; }
   .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+  .btn.danger { background: var(--critical-bg); color: var(--critical); border-color: var(--critical); }
   kbd { font: 11px ui-monospace, Menlo, monospace; border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; opacity: .8; }
-  .who { color: var(--text-muted); font-size: 13px; margin-bottom: 12px; }
+  .who { color: var(--text-muted); font-size: 13px; margin-bottom: 12px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .who .role-badge { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em;
+                     padding: 2px 7px; border-radius: 999px; background: var(--accent); color: var(--accent-ink); }
   .who button { font: inherit; font-size: 13px; background: none; border: 0; color: var(--accent); cursor: pointer; padding: 0; text-decoration: underline; }
   .seller-name { font-size: 22px; font-weight: 600; margin: 0; }
   .seller-name a { color: inherit; text-decoration: none; }
@@ -107,12 +112,28 @@
   .last { margin-top: 14px; font-size: 13px; color: var(--text-secondary); }
   .last .btn { padding: 2px 8px; font-size: 12px; margin-left: 6px; }
   .editing { font-size: 13px; font-weight: 600; color: var(--critical); margin-bottom: 6px; }
+
+  /* ---------- admin panel ---------- */
+  .admin-block { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px;
+                 padding: 18px; margin-bottom: 16px; }
+  .admin-block + .admin-block { margin-top: 0; }
+  .team-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .team-table th, .team-table td { padding: 8px 12px; text-align: right; }
+  .team-table th:first-child, .team-table td:first-child { text-align: left; }
+  .team-table th { color: var(--text-secondary); font-weight: 500; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .team-table td { border-bottom: 1px solid var(--border); font-variant-numeric: tabular-nums; }
+  .team-table tr:last-child td { border-bottom: 0; }
+  .add-form { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; align-items: end; margin-top: 12px; }
+  .add-form input { margin-bottom: 0; }
+  .add-msg { font-size: 13px; margin-top: 8px; min-height: 18px; }
+  .add-msg.ok { color: var(--good); }
+  .add-msg.err { color: var(--critical); }
 </style>
 </head>
 <body>
 <main>
   <header>
-    <h1>Lead Pipeline</h1>
+    <h1>primeamz Lead Pipeline</h1>
     <span class="updated" id="updated">Loading…</span>
   </header>
 
@@ -160,23 +181,63 @@
 
   <!-- ===================== DOMAIN FINDER ===================== -->
   <section id="tab-domains" role="tabpanel" class="df" hidden>
+
+    <!-- Login panel -->
     <div class="panel" id="df-login">
+      <h2 style="margin-bottom:16px">Sign in to Domain Finder</h2>
       <label for="df-member">Your name</label>
       <input type="text" id="df-member" autocomplete="name" placeholder="e.g. Ayse">
-      <div class="row"><button class="btn primary" id="df-start">Start</button></div>
+      <label for="df-password">Password</label>
+      <input type="password" id="df-password" autocomplete="current-password" placeholder="••••••••">
+      <div class="row"><button class="btn primary" id="df-start">Sign in</button></div>
       <div class="msg err" id="df-login-err" hidden></div>
     </div>
 
+    <!-- Workspace (shown after login) -->
     <div id="df-work" hidden>
+
+      <!-- Who bar -->
       <div class="who" id="df-who"></div>
+
+      <!-- Personal stats (everyone sees this) -->
       <div class="stats">
         <div class="stat"><div class="label">You today</div><div class="value" id="s-mine">–</div></div>
-        <div class="stat"><div class="label">Team today</div><div class="value" id="s-team">–</div></div>
+        <div class="stat" id="stat-team" hidden><div class="label">Team today</div><div class="value" id="s-team">–</div></div>
         <div class="stat"><div class="label">Found</div><div class="value" id="s-found">–</div></div>
         <div class="stat"><div class="label">Not found</div><div class="value" id="s-nf">–</div></div>
         <div class="stat"><div class="label">Remaining</div><div class="value" id="s-rem">–</div></div>
       </div>
 
+      <!-- Admin-only: team leaderboard + add teammate -->
+      <div id="df-admin" hidden>
+
+        <div class="admin-block">
+          <h3>Team activity</h3>
+          <table class="team-table">
+            <thead><tr><th>Member</th><th>Today</th><th>All time</th><th>Found</th><th>Not found</th></tr></thead>
+            <tbody id="df-team-body"><tr><td colspan="5" style="color:var(--text-muted);padding:10px 12px">Loading…</td></tr></tbody>
+          </table>
+        </div>
+
+        <div class="admin-block">
+          <h3>Add teammate</h3>
+          <div class="add-form">
+            <div>
+              <label for="new-member-name">Name</label>
+              <input type="text" id="new-member-name" placeholder="e.g. Ayse" autocomplete="off">
+            </div>
+            <div>
+              <label for="new-member-pwd">Password</label>
+              <input type="password" id="new-member-pwd" placeholder="••••••••" autocomplete="new-password">
+            </div>
+            <button class="btn primary" id="df-add-btn" style="margin-bottom:10px">Add</button>
+          </div>
+          <div class="add-msg" id="df-add-msg"></div>
+        </div>
+
+      </div><!-- /df-admin -->
+
+      <!-- Seller card -->
       <div class="panel" id="df-card">
         <div class="editing" id="df-editing" hidden>Editing a previous entry</div>
         <p class="seller-name"><a id="c-name" target="_blank" rel="noopener noreferrer">Loading…</a></p>
@@ -204,13 +265,14 @@
 
       <div class="panel" id="df-empty" hidden>Nothing left to do right now. New sellers appear as the pipeline adds them.
         <div class="row"><button class="btn" id="df-refresh">Check again</button></div></div>
-    </div>
+
+    </div><!-- /df-work -->
   </section>
 </main>
 
 <script>
   // Supabase public (anon) key: safe to expose. Raw tables are locked by RLS; this key can only call
-  // dashboard() (counts) and the domain_* functions (one seller card at a time + saving a domain).
+  // dashboard() (counts) and the domain_* / team_* functions.
   const SUPABASE_URL = "https://yttkhhtqgnsyhcnfvxsp.supabase.co";
   const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0dGtoaHRxZ25zeWhjbmZ2eHNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE1NDExNTIsImV4cCI6MjEwNzExNzE1Mn0.5cdygMrnCG7hdZPm5_LNrmgJQO9pqugce6LiJcfe1qo";
 
@@ -246,8 +308,8 @@
   window.addEventListener("hashchange", () => selectTab(location.hash === "#domains" ? "domains" : "dashboard"));
 
   // ===================== dashboard =====================
-  const DAILY_TARGET = 1100;       // expected leads/day at 20 Keepa tokens/min
-  const HEARTBEAT_STALE_MIN = 10;  // worker silent longer than this = down
+  const DAILY_TARGET = 1100;
+  const HEARTBEAT_STALE_MIN = 10;
   const ERROR_RECENT_MIN = 15;
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
   const fmt = (n) => (n ?? 0).toLocaleString();
@@ -257,90 +319,76 @@
     if (s < 5400) return `${Math.round(s / 60)} min ago`;
     return `${(s / 3600).toFixed(1)} h ago`;
   };
-  const todayStr = () => new Date().toLocaleDateString("en-CA", { timeZone: tz });
-  let lastLevel = null;
 
-  function health(d) {
-    const issues = [];
-    let level = "good";
-    const bump = (l) => { if (l === "critical" || (l === "warning" && level === "good")) level = l; };
-    const hb = d.heartbeat;
-    if (!hb) { bump("critical"); issues.push("Worker has never reported in."); }
-    else {
-      const ageMin = (Date.now() - new Date(hb.at)) / 60000;
-      if (ageMin > HEARTBEAT_STALE_MIN) { bump("critical"); issues.push(`Worker silent for ${Math.round(ageMin)} min. Check Railway.`); }
-      if (hb.last_error_at && (Date.now() - new Date(hb.last_error_at)) / 60000 < ERROR_RECENT_MIN) {
-        bump("warning"); issues.push(`Recent error (${ago(hb.last_error_at)}): ${hb.last_error}`);
-      }
-      const busy = d.last_hour.enriched + d.last_hour.detailed;
-      if (ageMin <= HEARTBEAT_STALE_MIN && busy === 0 && !["discovery", "idle", "starting"].includes(hb.stage)) {
-        bump("warning"); issues.push("No leads processed in the last hour.");
-      }
-    }
-    return { level, issues };
+  function todayStr() {
+    return new Date().toLocaleDateString("sv-SE", { timeZone: tz });
   }
 
-  function render(d) {
+  function bump(kind) { $("status").className = `status ${kind}`; }
+  function icon(ch) { $("status-icon").textContent = ch; }
+
+  async function tick() {
+    let d;
+    try { d = await rpc("dashboard", { tz }); } catch (e) {
+      bump("critical"); icon("!"); $("status-title").textContent = "Cannot reach Supabase";
+      $("status-meta").textContent = e.message; $("updated").textContent = "Error"; return;
+    }
+    $("updated").textContent = `Updated ${ago(d.now)}`;
+
+    const hb = d.heartbeat || {};
+    const ageMin = hb.at ? (Date.now() - new Date(hb.at)) / 60000 : 999;
+    const issues = [];
+    bump("good"); icon("✓"); $("status-title").textContent = "Worker is running";
+    $("status-meta").textContent = hb.at ? `Last heartbeat ${ago(hb.at)} · Stage: ${hb.stage} · Tokens: ${Math.round(hb.tokens_left ?? 0)} · Refill: ${hb.refill_rate ?? "?"}/min` : "";
+
+    const busy = d.last_hour.enriched + d.last_hour.detailed;
+    if (ageMin <= HEARTBEAT_STALE_MIN && busy === 0 && !["discovery", "idle", "starting"].includes(hb.stage)) {
+      bump("warning"); issues.push("No leads processed in the last hour.");
+    }
+    if (ageMin > HEARTBEAT_STALE_MIN) {
+      bump("critical"); icon("!"); $("status-title").textContent = "Worker appears to be down";
+      issues.push(`No heartbeat for ${Math.round(ageMin)} minutes.`);
+    }
+    if (hb.last_error && hb.last_error_at && (Date.now() - new Date(hb.last_error_at)) / 60000 < ERROR_RECENT_MIN) {
+      if ($("status").classList.contains("good")) bump("warning");
+      issues.push(`Recent error: ${hb.last_error}`);
+    }
+    $("status-issues").innerHTML = issues.map(i => `<li>${i}</li>`).join("");
+
     const t = d.totals;
     const today = (d.daily || []).find((r) => r.day === todayStr()) || { enriched: 0 };
     $("total").textContent = fmt(t.enriched);
-    $("total-sub").textContent = `${fmt(t.no_products)} had no products · ${fmt(t.errors)} failed`;
+    $("total-sub").textContent = `${fmt(d.last_hour.enriched)} in the last hour`;
     $("today").textContent = fmt(today.enriched);
     $("today-sub").textContent = `${Math.round((today.enriched / DAILY_TARGET) * 100)}% of ~${fmt(DAILY_TARGET)}/day target`;
     $("hour").textContent = fmt(d.last_hour.enriched);
     $("found").textContent = fmt(t.discovered);
-    $("found-sub").textContent = `${fmt(t.queue_details)} awaiting details`;
+    $("found-sub").textContent = `${fmt(t.queue_details + t.queue_enrich)} in queue`;
     $("queue").textContent = fmt(t.queue_enrich + t.queue_details);
     $("domains").textContent = fmt(t.domains_found);
     $("domains-sub").textContent = `${fmt(t.domains_not_found)} not found`;
-    const hb = d.heartbeat;
-    $("tokens").textContent = hb ? fmt(hb.tokens_left) : "–";
-    $("tokens-sub").textContent = hb ? `refill ${hb.refill_rate}/min · near 0 = fully used` : "";
+    const tl = Math.round(hb.tokens_left ?? 0);
+    $("tokens").textContent = tl < 0 ? "0" : fmt(tl);
+    $("tokens-sub").textContent = `Refill: ${hb.refill_rate ?? "?"}/min`;
 
-    const rows = (d.daily || []).map((r) => `
-      <tr class="${r.day === todayStr() ? "today" : ""}">
-        <td>${new Date(r.day + "T12:00:00").toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}${r.day === todayStr() ? " (today)" : ""}</td>
-        <td>${fmt(r.enriched)}</td><td>${fmt(r.no_products)}</td><td>${fmt(r.detailed)}</td><td>${fmt(r.discovered)}</td><td>${fmt(r.domains)}</td>
-      </tr>`).join("");
-    $("daily").innerHTML = rows || `<tr><td colspan="6">No activity yet.</td></tr>`;
+    const tbody = $("daily");
+    tbody.innerHTML = (d.daily || []).map(r => {
+      const cls = r.day === todayStr() ? ' class="today"' : "";
+      return `<tr${cls}><td>${r.day}</td><td>${fmt(r.enriched)}</td><td>${fmt(r.no_products)}</td><td>${fmt(r.detailed)}</td><td>${fmt(r.discovered)}</td><td>${fmt(r.domains)}</td></tr>`;
+    }).join("") || `<tr><td colspan="6" style="color:var(--text-muted)">No data yet.</td></tr>`;
 
-    const { level, issues } = health(d);
-    setStatus(level, { good: "All systems running", warning: "Running with warnings", critical: "System needs attention" }[level],
-      hb ? `Worker stage: ${hb.stage} · last heartbeat ${ago(hb.at)}` : "", issues);
+    if ("Notification" in window && Notification.permission === "default") $("alerts-btn").hidden = false;
   }
 
-  function setStatus(level, title, meta, issues) {
-    $("status").className = `status ${level}`;
-    $("status-icon").textContent = { good: "✓", warning: "!", critical: "✕" }[level];
-    $("status-title").textContent = title;
-    $("status-meta").textContent = meta;
-    $("status-issues").replaceChildren(...issues.map((i) => { const li = document.createElement("li"); li.textContent = i; return li; }));
-    document.title = (level === "good" ? "" : level === "warning" ? "⚠ " : "🔴 ") + "Lead Pipeline";
-    const color = { good: "%230ca30c", warning: "%23fab219", critical: "%23d03b3b" }[level];
-    $("favicon").href = `data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><circle cx='8' cy='8' r='7' fill='${color}'/></svg>`;
-    if (lastLevel && level !== lastLevel && level !== "good" && "Notification" in window && Notification.permission === "granted") {
-      new Notification("Lead Pipeline: " + title, { body: issues.join("\n") });
-    }
-    lastLevel = level;
-  }
-
-  async function tick() {
-    try {
-      render(await rpc("dashboard", { tz }));
-      $("updated").textContent = `Updated ${new Date().toLocaleTimeString()}`;
-    } catch (e) {
-      setStatus("critical", "Can't reach the database", "", [String(e.message || e)]);
-      $("updated").textContent = `Last attempt ${new Date().toLocaleTimeString()}`;
-    }
-  }
-
-  if ("Notification" in window && Notification.permission === "default") {
-    $("alerts-btn").hidden = false;
-    $("alerts-btn").onclick = () => Notification.requestPermission().then(() => ($("alerts-btn").hidden = true));
-  }
+  $("alerts-btn").onclick = async () => {
+    const p = await Notification.requestPermission();
+    $("alerts-btn").hidden = p !== "default";
+  };
 
   // ===================== domain finder =====================
-  let member = store.get("df_member");
+  let member   = store.get("df_member");
+  let password = store.get("df_pwd");
+  let role     = store.get("df_role");   // 'admin' | 'teammate' | ''
   let current = null, last = null, editing = false, busy = false;
 
   const normalize = (v) => (v || "").trim().toLowerCase()
@@ -350,8 +398,11 @@
 
   function dfStats(s) {
     if (!s) return;
-    $("s-mine").textContent = fmt(s.mine_today); $("s-team").textContent = fmt(s.team_today);
-    $("s-found").textContent = fmt(s.found); $("s-nf").textContent = fmt(s.not_found); $("s-rem").textContent = fmt(s.remaining);
+    $("s-mine").textContent = fmt(s.mine_today);
+    $("s-team").textContent = fmt(s.team_today);
+    $("s-found").textContent = fmt(s.found);
+    $("s-nf").textContent = fmt(s.not_found);
+    $("s-rem").textContent = fmt(s.remaining);
   }
   function dfMsg(text, kind) { $("df-msg").hidden = !text; $("df-msg").textContent = text || ""; $("df-msg").className = `msg ${kind || ""}`; }
 
@@ -404,8 +455,11 @@
 
   async function dfNext() {
     busy = true;
-    try { const r = await rpc("domain_next", { p_member: member }); editing = false; dfStats(r.stats); dfShow(r.seller); }
-    catch (e) { dfMsg(e.message, "err"); }
+    try { const r = await rpc("domain_next", { p_member: member, p_password: password }); editing = false; dfStats(r.stats); dfShow(r.seller); }
+    catch (e) {
+      if (e.message.includes("Wrong name or password")) { dfSignOut(); return; }
+      dfMsg(e.message, "err");
+    }
     finally { busy = false; }
   }
 
@@ -418,9 +472,10 @@
     }
     busy = true;
     try {
-      const r = await rpc("domain_save", { p_member: member, p_seller_id: current.seller_id, p_domain: domain, p_not_found: !!notFound });
+      const r = await rpc("domain_save", { p_member: member, p_seller_id: current.seller_id, p_domain: domain, p_not_found: !!notFound, p_password: password });
       last = r.saved; dfStats(r.stats); dfShowLast();
       dfMsg(notFound ? "Marked as not found." : `Saved ${r.saved.domain}`, "ok");
+      if (role === "admin") dfLoadTeam();
     } catch (e) { dfMsg(e.message, "err"); busy = false; return; }
     busy = false;
     await dfNext();
@@ -430,38 +485,116 @@
     if (busy || !current) return;
     if (editing) { editing = false; return dfNext(); }
     busy = true;
-    try { await rpc("domain_skip", { p_member: member, p_seller_id: current.seller_id }); dfMsg("Skipped. It will come back later.", ""); }
+    try { await rpc("domain_skip", { p_member: member, p_seller_id: current.seller_id, p_password: password }); dfMsg("Skipped. It will come back later.", ""); }
     catch (e) { dfMsg(e.message, "err"); }
     busy = false;
     await dfNext();
   }
 
-  function dfInit() {
-    if (member) return dfEnter();
-    $("df-login").hidden = false; $("df-work").hidden = true;
-    $("df-member").focus();
-  }
-  function dfEnter() {
-    $("df-login").hidden = true; $("df-work").hidden = false;
-    $("df-who").textContent = `Working as ${member} · `;
-    const b = document.createElement("button"); b.textContent = "change name";
-    b.onclick = () => { $("df-member").value = member; $("df-login").hidden = false; $("df-work").hidden = true; $("df-member").focus(); };
-    $("df-who").append(b);
-    dfNext();
-  }
-  function dfStart() {
-    const name = $("df-member").value.trim();
-    if (!name) { $("df-login-err").hidden = false; $("df-login-err").textContent = "Enter your name."; return; }
-    $("df-login-err").hidden = true;
-    member = name; store.set("df_member", member); dfEnter();
+  // ---------- admin functions ----------
+  async function dfLoadTeam() {
+    try {
+      const rows = await rpc("admin_team_stats", { p_name: member, p_password: password });
+      const tbody = $("df-team-body");
+      if (!rows || !rows.length) {
+        tbody.innerHTML = `<tr><td colspan="5" style="color:var(--text-muted);padding:10px 12px">No domain activity yet.</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = rows.map(r =>
+        `<tr><td>${r.member}</td><td>${fmt(r.today)}</td><td>${fmt(r.total)}</td><td>${fmt(r.found)}</td><td>${fmt(r.not_found)}</td></tr>`
+      ).join("");
+    } catch (e) { /* silently fail — admin_team_stats may not exist yet */ }
   }
 
+  async function dfAddMember() {
+    const newName = $("new-member-name").value.trim();
+    const newPwd  = $("new-member-pwd").value;
+    const msg = $("df-add-msg");
+    msg.className = "add-msg";
+    if (!newName || !newPwd) { msg.textContent = "Name and password are both required."; msg.className = "add-msg err"; return; }
+    try {
+      await rpc("team_add_member", { p_admin_name: member, p_admin_password: password, p_new_name: newName, p_new_password: newPwd });
+      msg.textContent = `✓ ${newName} added. Share their password with them.`;
+      msg.className = "add-msg ok";
+      $("new-member-name").value = ""; $("new-member-pwd").value = "";
+      dfLoadTeam();
+    } catch (e) { msg.textContent = e.message; msg.className = "add-msg err"; }
+  }
+
+  // ---------- auth flow ----------
+  function dfSignOut() {
+    member = ""; password = ""; role = "";
+    store.set("df_member", ""); store.set("df_pwd", ""); store.set("df_role", "");
+    $("df-login").hidden = false; $("df-work").hidden = true;
+    $("df-login-err").hidden = true;
+    $("df-password").value = ""; $("df-member").value = "";
+    $("df-member").focus();
+  }
+
+  function dfEnter() {
+    $("df-login").hidden = true; $("df-work").hidden = false;
+
+    // Build who-bar
+    $("df-who").innerHTML = "";
+    const badge = document.createElement("span");
+    badge.className = "role-badge";
+    badge.textContent = role === "admin" ? "Admin" : "Teammate";
+    $("df-who").append(`Working as ${member} `);
+    $("df-who").append(badge);
+    const signout = document.createElement("button");
+    signout.textContent = "sign out";
+    signout.onclick = dfSignOut;
+    $("df-who").append(" · ");
+    $("df-who").append(signout);
+
+    // Show/hide role-specific sections
+    const isAdmin = role === "admin";
+    $("df-admin").hidden = !isAdmin;
+    $("stat-team").hidden = !isAdmin;
+    if (isAdmin) dfLoadTeam();
+
+    dfNext();
+  }
+
+  async function dfStart() {
+    const name = $("df-member").value.trim();
+    const pwd  = $("df-password").value;
+    const err  = $("df-login-err");
+    if (!name) { err.hidden = false; err.textContent = "Enter your name."; return; }
+    if (!pwd)  { err.hidden = false; err.textContent = "Enter your password."; return; }
+    err.hidden = true;
+    $("df-start").disabled = true;
+    try {
+      const r = await rpc("team_login", { p_name: name, p_password: pwd });
+      member = r.name; password = pwd; role = r.role;
+      store.set("df_member", member); store.set("df_pwd", password); store.set("df_role", role);
+      dfEnter();
+    } catch (e) {
+      err.hidden = false; err.textContent = e.message;
+    } finally {
+      $("df-start").disabled = false;
+    }
+  }
+
+  function dfInit() {
+    if (member && password) {
+      // Auto-login with stored creds; if they fail, dfNext will call dfSignOut
+      dfEnter();
+    } else {
+      $("df-login").hidden = false; $("df-work").hidden = true;
+      $("df-member").focus();
+    }
+  }
+
+  // ---------- event bindings ----------
   $("df-start").onclick = dfStart;
-  $("df-member").addEventListener("keydown", (e) => { if (e.key === "Enter") dfStart(); });
+  $("df-member").addEventListener("keydown", (e) => { if (e.key === "Enter") $("df-password").focus(); });
+  $("df-password").addEventListener("keydown", (e) => { if (e.key === "Enter") dfStart(); });
   $("df-save").onclick = () => dfSave(false);
   $("df-notfound").onclick = () => dfSave(true);
   $("df-skip").onclick = dfSkip;
   $("df-refresh").onclick = dfNext;
+  $("df-add-btn").onclick = dfAddMember;
   $("df-domain").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); dfSave(e.shiftKey); } });
   $("df-domain").addEventListener("input", () => {
     const d = normalize($("df-domain").value);
