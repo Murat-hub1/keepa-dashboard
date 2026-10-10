@@ -568,62 +568,71 @@
   }
 
   // ---------- admin functions ----------
+  function makeCopyBtn(pwd) {
+    const btn = document.createElement("button");
+    btn.className = "btn sm"; btn.textContent = "Copy";
+    btn.onclick = () => { navigator.clipboard.writeText(pwd); btn.textContent = "Copied!"; };
+    return btn;
+  }
+
   async function dfLoadTeam() {
     try {
       const rows = await rpc("admin_team_stats", { p_name: member, p_password: password });
       const tbody = $("df-team-body");
+      tbody.innerHTML = "";
       if (!rows || !rows.length) {
-        tbody.innerHTML = `<tr><td colspan="6" style="color:var(--text-muted);padding:10px 12px">No team members yet.</td></tr>`;
-        return;
+        const tr = tbody.insertRow(); const td = tr.insertCell();
+        td.colSpan = 6; td.style.cssText = "color:var(--text-muted);padding:10px 12px";
+        td.textContent = "No team members yet."; return;
       }
-      tbody.innerHTML = rows.map(r => `
-        <tr id="tr-${CSS.escape(r.member)}">
-          <td>${r.member}</td>
-          <td>${fmt(r.today)}</td><td>${fmt(r.total)}</td><td>${fmt(r.found)}</td><td>${fmt(r.not_found)}</td>
-          <td style="text-align:right;white-space:nowrap">
-            <button class="btn sm" onclick="dfShowReset(${JSON.stringify(r.member)})">Reset pwd</button>
-            <button class="btn sm danger" style="margin-left:4px" onclick="dfDeleteMember(${JSON.stringify(r.member)})">Delete</button>
-          </td>
-        </tr>
-        <tr id="reset-row-${CSS.escape(r.member)}" class="reset-row" hidden>
-          <td colspan="6">
-            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-              <span style="font-size:13px;font-weight:600">New password for ${r.member}:</span>
-              <input type="text" id="reset-pwd-${CSS.escape(r.member)}" placeholder="new password" style="max-width:200px;margin:0;padding:6px 10px;font-size:13px;border-radius:6px;border:1px solid var(--border);background:var(--surface-0);color:var(--text-primary)">
-              <button class="btn sm primary" onclick="dfResetPwd(${JSON.stringify(r.member)})">Save</button>
-              <button class="btn sm" onclick="dfHideReset(${JSON.stringify(r.member)})">Cancel</button>
-              <span id="reset-msg-${CSS.escape(r.member)}" style="font-size:13px"></span>
-            </div>
-          </td>
-        </tr>`
-      ).join("");
+      for (const r of rows) {
+        // main row
+        const tr = tbody.insertRow();
+        [r.member, fmt(r.today), fmt(r.total), fmt(r.found), fmt(r.not_found)].forEach((v, i) => {
+          const td = tr.insertCell(); td.textContent = v;
+          if (i > 0) td.style.textAlign = "right";
+        });
+        const actTd = tr.insertCell(); actTd.style.cssText = "text-align:right;white-space:nowrap";
+        const resetBtn = document.createElement("button");
+        resetBtn.className = "btn sm"; resetBtn.textContent = "Reset pwd";
+        resetBtn.onclick = () => { resetRow.hidden = !resetRow.hidden; if (!resetRow.hidden) pwdInput.focus(); };
+        const delBtn = document.createElement("button");
+        delBtn.className = "btn sm danger"; delBtn.style.marginLeft = "4px"; delBtn.textContent = "Delete";
+        delBtn.onclick = async () => {
+          if (!confirm(`Delete ${r.member}? They will no longer be able to log in.`)) return;
+          try { await rpc("admin_delete_member", { p_admin_name: member, p_admin_password: password, p_target_name: r.member }); dfLoadTeam(); }
+          catch (e) { alert(e.message); }
+        };
+        actTd.append(resetBtn, delBtn);
+
+        // reset row
+        const resetRow = tbody.insertRow(); resetRow.className = "reset-row"; resetRow.hidden = true;
+        const resetTd = resetRow.insertCell(); resetTd.colSpan = 6;
+        const wrap = document.createElement("div");
+        wrap.style.cssText = "display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:4px 0";
+        const lbl = document.createElement("span"); lbl.style.cssText = "font-size:13px;font-weight:600";
+        lbl.textContent = `New password for ${r.member}:`;
+        const pwdInput = document.createElement("input"); pwdInput.type = "text"; pwdInput.placeholder = "new password";
+        pwdInput.style.cssText = "max-width:200px;margin:0;padding:6px 10px;font-size:13px;border-radius:6px;border:1px solid var(--border);background:var(--surface-0);color:var(--text-primary)";
+        const saveBtn = document.createElement("button"); saveBtn.className = "btn sm primary"; saveBtn.textContent = "Save";
+        const cancelBtn = document.createElement("button"); cancelBtn.className = "btn sm"; cancelBtn.textContent = "Cancel";
+        cancelBtn.onclick = () => { resetRow.hidden = true; pwdInput.value = ""; msgSpan.textContent = ""; };
+        const msgSpan = document.createElement("span"); msgSpan.style.fontSize = "13px";
+        saveBtn.onclick = async () => {
+          const newPwd = pwdInput.value;
+          if (!newPwd) { msgSpan.style.color = "var(--critical)"; msgSpan.textContent = "Enter a password."; return; }
+          try {
+            await rpc("admin_reset_password", { p_admin_name: member, p_admin_password: password, p_target_name: r.member, p_new_password: newPwd });
+            msgSpan.style.color = "var(--good)";
+            msgSpan.textContent = `✓ Saved. New password: ${newPwd}  `;
+            msgSpan.append(makeCopyBtn(newPwd));
+            pwdInput.value = "";
+          } catch (e) { msgSpan.style.color = "var(--critical)"; msgSpan.textContent = e.message; }
+        };
+        wrap.append(lbl, pwdInput, saveBtn, cancelBtn, msgSpan);
+        resetTd.append(wrap);
+      }
     } catch (e) { /* silently fail */ }
-  }
-
-  function dfShowReset(name) {
-    $(`reset-row-${CSS.escape(name)}`).hidden = false;
-    $(`reset-pwd-${CSS.escape(name)}`).focus();
-  }
-  function dfHideReset(name) { $(`reset-row-${CSS.escape(name)}`).hidden = true; }
-
-  async function dfResetPwd(name) {
-    const newPwd = $(`reset-pwd-${CSS.escape(name)}`).value;
-    const msgEl = $(`reset-msg-${CSS.escape(name)}`);
-    if (!newPwd) { msgEl.textContent = "Enter a password."; msgEl.style.color = "var(--critical)"; return; }
-    try {
-      await rpc("admin_reset_password", { p_admin_name: member, p_admin_password: password, p_target_name: name, p_new_password: newPwd });
-      msgEl.style.color = "var(--good)";
-      msgEl.innerHTML = `✓ Saved. New password: <strong>${newPwd}</strong> &nbsp;<button class="btn sm" onclick="navigator.clipboard.writeText(${JSON.stringify(newPwd)});this.textContent='Copied!'">Copy</button>`;
-      $(`reset-pwd-${CSS.escape(name)}`).value = "";
-    } catch (e) { msgEl.textContent = e.message; msgEl.style.color = "var(--critical)"; }
-  }
-
-  async function dfDeleteMember(name) {
-    if (!confirm(`Delete ${name}? They will no longer be able to log in.`)) return;
-    try {
-      await rpc("admin_delete_member", { p_admin_name: member, p_admin_password: password, p_target_name: name });
-      dfLoadTeam();
-    } catch (e) { alert(e.message); }
   }
 
   async function dfAddMember() {
@@ -634,13 +643,8 @@
     if (!newName || !newPwd) { msg.className = "add-msg err"; msg.textContent = "Name and password are both required."; return; }
     try {
       await rpc("team_add_member", { p_admin_name: member, p_admin_password: password, p_new_name: newName, p_new_password: newPwd });
-      msg.className = "add-msg ok";
-      msg.innerHTML = `✓ ${newName} added.
-        <div class="pwd-reveal">
-          <span style="font-size:13px;white-space:nowrap">Password:</span>
-          <input type="text" readonly value="${newPwd.replace(/"/g,'&quot;')}">
-          <button class="btn sm" onclick="navigator.clipboard.writeText(${JSON.stringify(newPwd)});this.textContent='Copied!'">Copy</button>
-        </div>`;
+      msg.className = "add-msg ok"; msg.textContent = `✓ ${newName} added.  Password: ${newPwd}  `;
+      msg.append(makeCopyBtn(newPwd));
       $("new-member-name").value = ""; $("new-member-pwd").value = "";
       dfLoadTeam();
     } catch (e) { msg.className = "add-msg err"; msg.textContent = e.message; }
